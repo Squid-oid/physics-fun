@@ -53,9 +53,9 @@ class TimeFuncs:
         
         Parameters
         ----------
-        f : np.matrix or array that can be used as matrix
+        f : numpy.matrix or array that can be used as matrix
             Derivative matrix
-        u : np.matrix or array that can be used as matrix
+        u : numpy.matrix or array that can be used as matrix
             Initial state for some variable or collection of variables
             
         Returns
