@@ -17,4 +17,3 @@ while(True):
     tStart = time.time()
     p.update(stepper)
     time.sleep(time.time() - tStart + 1/60)
-
