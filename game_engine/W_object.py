@@ -6,6 +6,19 @@ import copy
 # World object classes                                                    #
 ###########################################################################
 class W_object():
+    """
+    Superclass for all game/physics objects handles coordinate, velocity and sprite storage by default
+
+    Parameters
+    ----------
+    coord : W_object.Coordinate
+        The coordinates of the object, if none is given the object will be at the origin
+    vel : W_object.Velocity
+        The velocity of the object, if none is given the object will have no velocity
+    sprite : sdl2.ext.sprite
+        The sprite of the object, if none is given the object has no sprite and wil not draw
+
+    """
     def __init__(self, coord:'Coordinate' = None, vel:'Velocity' = None, sprite:sdl2.ext.sprite = None):
         if coord is None:
             coord = Coordinate()
@@ -57,13 +70,16 @@ class Ball(W_object):
 
     def bar_overlap(self:'Ball', bar:Barrier):
         '''
-        Finds and returns the greatest overlapping distance between a ball and a barrier then returns it in the standard basis vectors as a vector,
-        args:
-            bar:Barrier
-                The barrier to check overlap with
-        returns:
-            overlap:np.mat 
-                The maximum overlap in vector form, directed such that a negative overlap implies that the two are not touching yet
+        Finds and returns the greatest overlapping distance between a ball and a barrier then returns it in the standard basis vectors as a vector
+
+        Parameters
+        ----------
+        bar : W_object.Barrier
+            The barrier to check overlap with
+        Returns
+        -------
+        overlap : numpy.mat 
+            The maximum overlap in vector form, directed such that a negative overlap implies that the two are not touching yet
         '''
         delta = CVector(self.coord.delta(bar.coord))
         proj_delta = CVector([delta.transform(bar.mat)[0,0], 0])
@@ -73,13 +89,16 @@ class Ball(W_object):
     
     def bar_collide(self:'Ball', bar:Barrier):
         '''
-        Handles a bar collision
-        args:
-            bar:Barrier
-                The barrier to check overlap with
-        returns:
-            overlap:np.mat 
-                The maximum overlap in vector form, directed such that a negative overlap implies that the two are not touching yet
+        Handles a ball bar collision
+
+        Parameters
+        ----------
+        bar : W_object.Barrier
+            The barrier to check overlap with
+        Returns
+        -------
+        overlap : numpy.mat 
+            The maximum overlap in vector form, directed such that a negative overlap implies that the two are not touching yet
         '''
         delta = CVector(self.coord.delta(bar.coord))
         proj_delta = CVector([delta.transform(bar.mat)[0,0], 0])
