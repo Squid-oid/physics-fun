@@ -30,7 +30,7 @@ objects.append(bndt)
 objects.append(bndl)
 objects.append(bndb)
 objects.append(bndr)
-
+bll.bar_overlap()
 objects.append(bll)
 
 barriers.append(bndt)
