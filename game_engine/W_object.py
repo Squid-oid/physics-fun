@@ -52,7 +52,6 @@ class W_object():
         """
         pass
 
-
 class Barrier(W_object):
     """
     A W_object subclass that implements Barriers which collide with everything behind them
@@ -296,7 +295,6 @@ class CVector():
             The transformed vector
         """
         return np.transpose(np.linalg.solve(np.transpose(base), np.transpose(self.vec)))            #Go study linalg if you don't get this
-    
 
 class Coordinate(CVector):
     def __init__(self, coords = [0,0]):
