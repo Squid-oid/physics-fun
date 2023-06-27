@@ -21,7 +21,7 @@ processor = sdl2.ext.TestEventProcessor()
 objects = []
 barriers = []
 
-bll = W.Ball(coord=[10,30], vel=[12,15])
+bll = W.Ball(coord=[10,30], vel=[6,4])
 bndt = W.Barrier(coord = [0,0], fact = factory, angle=np.pi)
 bndl = W.Barrier(coord=[0,0], fact = factory, angle=np.pi*1/2)
 bndb = W.Barrier(coord=[640,480], fact = factory, angle= 0)
@@ -30,7 +30,7 @@ objects.append(bndt)
 objects.append(bndl)
 objects.append(bndb)
 objects.append(bndr)
-bll.bar_overlap()
+
 objects.append(bll)
 
 barriers.append(bndt)
@@ -45,10 +45,11 @@ refresh_args = {
 }
 
 while(game_running):
-    sprite_renderer.render(bckg)
     for obj in objects:
         args = refresh_args[type(obj)]
         obj.refresh(args)
+    sprite_renderer.render(bckg)
+    for obj in objects:
         obj.draw(sprite_renderer = sprite_renderer)
         window.refresh()
-    sdl2.SDL_Delay(16)
+    sdl2.SDL_Delay(20)
