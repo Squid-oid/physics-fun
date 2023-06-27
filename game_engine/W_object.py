@@ -8,18 +8,20 @@ import copy
 class W_object():
     """
     Superclass for all game/physics objects handles coordinate, velocity and sprite storage by default
-
-    Parameters
-    ----------
-    coord : W_object.Coordinate
-        The coordinates of the object, if none is given the object will be at the origin
-    vel : W_object.Velocity
-        The velocity of the object, if none is given the object will have no velocity
-    sprite : sdl2.ext.sprite
-        The sprite of the object, if none is given the object has no sprite and wil not draw
-
     """
     def __init__(self, coord:'Coordinate' = None, vel:'Velocity' = None, sprite:sdl2.ext.sprite = None):
+        """
+        Initializes a new W_object object at the coordinates, velocity and sprite provided
+
+        Parameters
+        ----------
+        coord : W_object.Coordinate
+            The coordinates of the object, if none is given the object will be at the origin
+        vel : W_object.Velocity
+            The velocity of the object, if none is given the object will have no velocity
+        sprite : sdl2.ext.sprite
+            The sprite of the object, if none is given the object has no sprite and wil not draw
+        """
         if coord is None:
             coord = Coordinate()
         if vel is None:
@@ -29,15 +31,50 @@ class W_object():
         self.sprite = sprite
 
     def draw(self, sprite_renderer:sdl2.ext.SpriteRenderSystem):
+        """
+        Draws the object using the sprite renderer provided
+
+        Parameters
+        ----------
+        sprite_renderer : sdl2.ext.SpriteRenderSystem
+            The Sprite renderer with which to draw the sprite
+        """
         sprite_renderer.render(self.sprite, round(self.coord.get_x()), round(self.coord.get_y()))
 
     def refresh(self, args):
+        """
+        Provides a default implementation of refreshing the object (taking a new timestep)
+
+        Parameters
+        ----------
+        args : List
+            A list of args, should usually be empty when the default refresh is used
+        """
         pass
 
 
 class Barrier(W_object):
+    """
+    A W_object subclass that implements Barriers which collide with everything behind them
+    """
     def __init__(self, coord:'Coordinate' = None, vel:'Velocity' = None, sprite:sdl2.ext.sprite = None, angle:float = 0, fact:sdl2.ext.SpriteFactory = None):
-        self.angle = 0 ##Temp flat angle only
+        """
+        Initializes a new Barrier object at the coordinates coord, the barrier extends infinetly in each direction and collides with everything behind it 
+        
+        Parameters
+        ----------
+        coord : Coordinate
+            The coordinate at which the Barrier is centered
+        vel : Velocity
+            The velocity at which the Barrier would move if it could move
+        sprite : sdl2.ext.sprite
+            The sprite which the barrier wil be represented by
+        angle : float
+            The angle of the Barrier
+        fact : sdl2.ext.SpriteFactory
+            A sprite factory with which to create a default sprite
+        """
+        self.angle = angle
         sin = np.sin(angle)
         cos = np.cos(angle)
         directed_normal = [sin, -cos]
@@ -55,6 +92,14 @@ class Barrier(W_object):
         super().__init__(coord = coord, vel = vel, sprite = sprite)
             
     def draw(self, sprite_renderer:sdl2.ext.SpriteRenderSystem):
+        """
+        Draws the Barrier using the SpriteRenderSystem provided (Does not actually do this right now)
+
+        Parameters
+        ----------
+        sprite_renderer : sdl2.ext.SpriteRenderSystem
+            The renderer with which to draw the Barrier
+        """
         pass
 
 class Ball(W_object):
