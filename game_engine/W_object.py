@@ -206,7 +206,7 @@ class CVector():
         Parameters
         ----------
         vec : np.matrix
-            The vector to wrap in a CVector, can also handle being passed a CVector or a subclass
+            The vector to wrap in a CVector, can also handle being passed a CVector or a subclass or a list
         """
         if isinstance(vec, np.matrix) or isinstance(vec, list):
             self.vec = np.mat(vec)
@@ -297,21 +297,67 @@ class CVector():
         return np.transpose(np.linalg.solve(np.transpose(base), np.transpose(self.vec)))            #Go study linalg if you don't get this
 
 class Coordinate(CVector):
+    """
+    A subclass of CVector that handles coordinates, has the extra functions get_x and get_y for intuitive use, as well as the extra coords()
+    as an alternative way of getting the vector
+    """
     def __init__(self, coords = [0,0]):
+        """
+        Initilializes a new Coordinate at the coords specified
+
+        Parameters
+        ----------
+        coords : numpy.mat/List[ints]
+            The coordinates to store
+        """
         super().__init__(coords)
 
     def coords(self):
+        """
+        Gets the internal vector that specifies the coordinates
+
+        Returns
+        -------
+        vec : numpy.mat
+            The coordinates in a numpy matrix form
+        """
         return self.vec
     
     def get_x(self):
+        """
+        Gets the x coordinate of the coordinates
+
+        Returns
+        -------
+        - : float
+            The x coordinate of the Coordinate
+        """
         return self.vec[0,0]
     
     def get_y(self):
+        """
+        Gets the y coordinate of the coordinates
+
+        Returns
+        -------
+        - : float
+            The y coordinate of the Coordinate
+        """
         return self.vec[0,1]
 
 
 class Velocity(CVector):
+    """
+    A subclass of CVector that handles coordinates, has the extra function vel() to get the velocity intuitively
+    """
     def __init__(self, vel = [0,0]):
+        """
+        Initilializes a new Velocity with the velocity specified
+        Parameters
+        ----------
+        vel : numpy.mat/List[ints]
+            The velocity to store
+        """
         super().__init__(vel)
 
     def vel(self):
