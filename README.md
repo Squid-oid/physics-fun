@@ -3,9 +3,9 @@ A little project to build a physics engine and use it in a small demo game
 
 # Todo
 Phase 0 (Balls in Box);
-1. Add proper comments to code already present
+~~1. Add proper comments to code already present~~
 2. Reevaluate the nessecity of the CVector Vector handling
-3. Move refresh() actions over to using the TimeFuncs.timestep() function, as well as being tied to the system clock instead of framerate
+3. Change refresh() actions over to using the TimeFuncs.timestep() function, as well as being tied to the system clock instead of framerate
 4. Implement and test bsic ball on ball collision
 5. Allow free selection of Ball Size
 6. [Maybe] implement refresh() new collision rechecking to allow a Ball object to continue bouncing multiple times in one refresh, [Maybe] implement collision based physics ticks rather than frame based ones, ie extrapolate object paths until first collision/(lazily possible collision using event horizon) and do a physics refresh exactly at that point to reduce tick frequency.
