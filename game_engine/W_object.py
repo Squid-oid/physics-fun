@@ -345,7 +345,6 @@ class Coordinate(CVector):
         """
         return self.vec[0,1]
 
-
 class Velocity(CVector):
     """
     A subclass of CVector that handles coordinates, has the extra function vel() to get the velocity intuitively
