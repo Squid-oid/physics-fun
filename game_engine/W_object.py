@@ -197,7 +197,18 @@ class Ball(W_object):
 # a generic CVector parent for all the rest, more may be added as needed #
 ##########################################################################
 class CVector():
+    """
+    A vector handling class, mostly a wrapper for np.matrix, but includes a couple helper functions
+    """
     def __init__(self, vec:np.matrix = [0,0]):
+        """
+        Initializes a new CVector containing the matrix stored in vec
+
+        Parameters
+        ----------
+        vec : np.matrix
+            The vector to wrap in a CVector, can also handle being passed a CVector or a subclass
+        """
         if isinstance(vec, np.matrix) or isinstance(vec, list):
             self.vec = np.mat(vec)
         elif issubclass(type(vec), CVector) or isinstance(vec, CVector):
@@ -206,18 +217,84 @@ class CVector():
             self.vec = np.mat([0,0])
         
     def __add__(self, other:'CVector'):
+        """
+        Finds the sum of this CVector and another CVector
+
+        Parameters
+        ----------
+        other : CVector
+            The CVector to add to this CVector
+        
+        Returns 
+        -------
+        - : CVector
+            A new CVector of the same type as this CVector
+        """
         return type(self)(self.vec + other.vec)
 
     def __sub__(self, other:'CVector'):
+        """
+        Finds the sum of this CVector and the negative of another CVector
+
+        Parameters
+        ----------
+        other : CVector
+            The CVector to subtract from this CVector
+        
+        Returns 
+        -------
+        - : CVector
+            A new CVector of the same type as this CVector
+        """
         return type(self)(self.vec - other.vec)
     
     def delta(self, other:'CVector'):
+        """
+        Returns the vector created by subtracting another CVectors vector
+
+        Parameters
+        ----------
+        other : CVector
+            The CVector to find the gap to
+
+        Returns
+        -------
+        - : numpy.mat
+            The difference between this CVectors vector and another CVectors vector
+        """
         return self.vec - other.vec
 
     def dist(self, other:'CVector'):
+        """
+        Finds the norm of the difference between this CVectors vector and another CVectors vector
+
+        Parameters
+        ----------
+        other :
+            The CVector to find the distance to
+
+        Returns
+        -------
+        - : float
+            The 2 norm of the difference between the two CVectors vectors'
+        """
         return np.linalg.norm(self.vec - other.vec)
     
     def transform(self, base:np.mat):
+        """
+        Finds the transform of this CVectors vector in a new base
+
+        Parameters
+        ----------
+        base : np.mat
+            The Base to transform into, it is assumed that the current base has the form [1 0]
+                                                                                         [0 1]
+        
+        Returns
+        -------
+        - : np.mat
+            The transformed vector
+        """
         return np.transpose(np.linalg.solve(np.transpose(base), np.transpose(self.vec)))            #Go study linalg if you don't get this
     
 
