@@ -133,6 +133,7 @@ class Ball(W_object):
         ----------
         bar : W_object.Barrier
             The barrier to check overlap with
+
         Returns
         -------
         overlap : numpy.mat 
@@ -152,6 +153,7 @@ class Ball(W_object):
         ----------
         bar : W_object.Barrier
             The barrier to check overlap with
+            
         Returns
         -------
         - : bool 
