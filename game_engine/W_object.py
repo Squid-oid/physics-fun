@@ -103,7 +103,20 @@ class Barrier(W_object):
         pass
 
 class Ball(W_object):
+    """
+    A W_object subclass that moves around and bounces off Barriers
+    """
     def __init__(self, coord:'Coordinate' = None, vel:'Velocity' = None):
+        """
+        Initializes a new Ball object at the provided Coordinates with the provided Velocity
+
+        Parameters
+        ----------
+        coord : Coordinate
+            The coordinate at which to initiliaze the Ball, if none is provided it is created at the origin
+        vel : Velocity
+            The initial velocity, if none is provided the Ball is stationary
+        """
         base_sprites = sdl2.ext.Resources(__file__, "basesprites")
         sprite = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE).from_image(base_sprites.get_path("ball.bmp"))
         
@@ -114,7 +127,7 @@ class Ball(W_object):
         super().__init__(coord = coord, vel = vel, sprite = sprite)
 
     def bar_overlap(self:'Ball', bar:Barrier):
-        '''
+        """
         Finds and returns the greatest overlapping distance between a ball and a barrier then returns it in the standard basis vectors as a vector
 
         Parameters
@@ -125,7 +138,7 @@ class Ball(W_object):
         -------
         overlap : numpy.mat 
             The maximum overlap in vector form, directed such that a negative overlap implies that the two are not touching yet
-        '''
+        """
         delta = CVector(self.coord.delta(bar.coord))
         proj_delta = CVector([delta.transform(bar.mat)[0,0], 0])
         proj_gap = proj_delta - CVector([self.radius, 0])
@@ -133,7 +146,7 @@ class Ball(W_object):
         return overlap
     
     def bar_collide(self:'Ball', bar:Barrier):
-        '''
+        """
         Handles a ball bar collision
 
         Parameters
@@ -142,9 +155,9 @@ class Ball(W_object):
             The barrier to check overlap with
         Returns
         -------
-        overlap : numpy.mat 
-            The maximum overlap in vector form, directed such that a negative overlap implies that the two are not touching yet
-        '''
+        - : bool 
+            Wether or not the Ball collided with the Barrier
+        """
         delta = CVector(self.coord.delta(bar.coord))
         proj_delta = CVector([delta.transform(bar.mat)[0,0], 0])
         proj_gap = proj_delta - CVector([self.radius, 0])
@@ -162,6 +175,14 @@ class Ball(W_object):
             return False
     
     def refresh(self, args):
+        """
+        Overrides the defualt refresh to create a new one which moves the Ball and checks if it has collided with any barriers
+
+        Parameters
+        ----------
+        args : List of Dictionaries
+            A list, if passed correctly it should contain a dictionary with an entry keyed "barriers" containing a list of Barriers  
+        """
         self.coord = self.coord + self.vel
         bars = args["barriers"]
         for bar in bars:
