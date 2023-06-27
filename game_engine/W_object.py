@@ -23,9 +23,9 @@ class W_object():
             The sprite of the object, if none is given the object has no sprite and wil not draw
         """
         if coord is None:
-            coord = Coordinate()
+            coord = np.mat([0,0])
         if vel is None:
-            vel = Velocity()
+            vel = np.mat([0,0])
         self.coord = coord
         self.vel = vel
         self.sprite = sprite
@@ -105,7 +105,7 @@ class Ball(W_object):
     """
     A W_object subclass that moves around and bounces off Barriers
     """
-    def __init__(self, coord:np.mat = None, vel:'Velocity' = None):
+    def __init__(self, coord:np.mat = None, vel:np.mat = None):
         """
         Initializes a new Ball object at the provided Coordinates with the provided Velocity
 
@@ -191,175 +191,3 @@ class Ball(W_object):
 ##########################################################################
 # Collider Class, used in Objects for generic collision detection        #
 ##########################################################################
-
-
-##########################################################################
-# Vector types below, eg Coordinates w/ some special functions and       #
-# a generic CVector parent for all the rest, more may be added as needed #
-##########################################################################
-class CVector():
-    """
-    A vector handling class, mostly a wrapper for np.matrix, but includes a couple helper functions
-    """
-    def __init__(self, vec:np.matrix = [0,0]):
-        """
-        Initializes a new CVector containing the matrix stored in vec
-
-        Parameters
-        ----------
-        vec : np.matrix
-            The vector to wrap in a CVector, can also handle being passed a CVector or a subclass or a list
-        """
-        if isinstance(vec, np.matrix) or isinstance(vec, list):
-            self.vec = np.mat(vec)
-        elif issubclass(type(vec), CVector) or isinstance(vec, CVector):
-            self.vec = np.mat(vec.vec)
-        else:
-            self.vec = np.mat([0,0])
-        
-    def __add__(self, other:'CVector'):
-        """
-        Finds the sum of this CVector and another CVector
-
-        Parameters
-        ----------
-        other : CVector
-            The CVector to add to this CVector
-        
-        Returns 
-        -------
-        - : CVector
-            A new CVector of the same type as this CVector
-        """
-        return type(self)(self.vec + other.vec)
-
-    def __sub__(self, other:'CVector'):
-        """
-        Finds the sum of this CVector and the negative of another CVector
-
-        Parameters
-        ----------
-        other : CVector
-            The CVector to subtract from this CVector
-        
-        Returns 
-        -------
-        - : CVector
-            A new CVector of the same type as this CVector
-        """
-        return type(self)(self.vec - other.vec)
-    
-    def delta(self, other:'CVector'):
-        """
-        Returns the vector created by subtracting another CVectors vector
-
-        Parameters
-        ----------
-        other : CVector
-            The CVector to find the gap to
-
-        Returns
-        -------
-        - : numpy.mat
-            The difference between this CVectors vector and another CVectors vector
-        """
-        return self.vec - other.vec
-
-    def dist(self, other:'CVector'):
-        """
-        Finds the norm of the difference between this CVectors vector and another CVectors vector
-
-        Parameters
-        ----------
-        other :
-            The CVector to find the distance to
-
-        Returns
-        -------
-        - : float
-            The 2 norm of the difference between the two CVectors vectors'
-        """
-        return np.linalg.norm(self.vec - other.vec)
-    
-    def transform(self, base:np.mat):
-        """
-        Finds the transform of this CVectors vector in a new base
-
-        Parameters
-        ----------
-        base : np.mat
-            The Base to transform into, it is assumed that the current base has the form [1 0]
-                                                                                         [0 1]
-        
-        Returns
-        -------
-        - : np.mat
-            The transformed vector
-        """
-        return np.transpose(np.linalg.solve(np.transpose(base), np.transpose(self.vec)))            #Go study linalg if you don't get this
-
-class Coordinate(CVector):
-    """
-    A subclass of CVector that handles coordinates, has the extra functions get_x and get_y for intuitive use, as well as the extra coords()
-    as an alternative way of getting the vector
-    """
-    def __init__(self, coords = [0,0]):
-        """
-        Initilializes a new Coordinate at the coords specified
-
-        Parameters
-        ----------
-        coords : numpy.mat/List[ints]
-            The coordinates to store
-        """
-        super().__init__(coords)
-
-    def coords(self):
-        """
-        Gets the internal vector that specifies the coordinates
-
-        Returns
-        -------
-        vec : numpy.mat
-            The coordinates in a numpy matrix form
-        """
-        return self.vec
-    
-    def get_x(self):
-        """
-        Gets the x coordinate of the coordinates
-
-        Returns
-        -------
-        - : float
-            The x coordinate of the Coordinate
-        """
-        return self.vec[0,0]
-    
-    def get_y(self):
-        """
-        Gets the y coordinate of the coordinates
-
-        Returns
-        -------
-        - : float
-            The y coordinate of the Coordinate
-        """
-        return self.vec[0,1]
-
-class Velocity(CVector):
-    """
-    A subclass of CVector that handles coordinates, has the extra function vel() to get the velocity intuitively
-    """
-    def __init__(self, vel = [0,0]):
-        """
-        Initilializes a new Velocity with the velocity specified
-        Parameters
-        ----------
-        vel : numpy.mat/List[ints]
-            The velocity to store
-        """
-        super().__init__(vel)
-
-    def vel(self):
-        return self.vec
