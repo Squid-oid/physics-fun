@@ -1,7 +1,7 @@
 import numpy as np
 import logging
 
-class TimeFuncs:
+class Time_Funcs:
     def __init__(self, t:float = 0,  h:float = 0):
         """
         Instantiates a new TimeFuncs object with time t and stepsize h
@@ -33,6 +33,8 @@ class TimeFuncs:
             h = 0
             logging.warning('Negative or zero stepsize found at time: ' + str(t))
         self.h = h
+        self.t = t
+        print(h)
         return h
 
     def setStepSize(self, h:float):
@@ -46,7 +48,7 @@ class TimeFuncs:
         """
         self.h = h
 
-    def timestep(self, f:np.matrix, u:np.matrix, h:float = None):
+    def time_step(self, f:np.matrix, u:np.matrix, h:float = None):
         """
         Takes a time step forward using the framework u_y+1 = u_y + du/dt_y+1
         f is a matrix such that fu gives du\dt so u_y+1 = u_y

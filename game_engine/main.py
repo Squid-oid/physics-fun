@@ -3,6 +3,8 @@ import sdl2
 import sdl2.ext
 import W_object as W
 import numpy as np
+import Timestep as ts
+import time as time
 
 game_running = True
 RESOURCES = sdl2.ext.Resources(__file__, "basesprites")
@@ -21,7 +23,7 @@ processor = sdl2.ext.TestEventProcessor()
 objects = []
 barriers = []
 
-bll = W.Ball(coord=[10,30], vel=[6,4])
+bll = W.Ball(coord=[10,30], vel=[60,40])        #Velocitty in pixels per second
 bndt = W.Barrier(coord = [0,0], fact = factory, angle=np.pi)
 bndl = W.Barrier(coord=[0,0], fact = factory, angle=np.pi*1/2)
 bndb = W.Barrier(coord=[640,480], fact = factory, angle= 0)
@@ -38,18 +40,21 @@ barriers.append(bndl)
 barriers.append(bndb)
 barriers.append(bndr)
 
+stepper = ts.Time_Funcs(t = time.time())
+
 refresh_args = {
-    W.Ball: {'barriers': barriers},
+    W.Ball: {'barriers': barriers, 'stepper' : stepper},
     W.Barrier: {},
     W.W_object: {},
 }
 
 while(game_running):
+    stepper.find_set_stepsize(time.time())
     for obj in objects:
         args = refresh_args[type(obj)]
         obj.refresh(args)
     sprite_renderer.render(bckg)
     for obj in objects:
         obj.draw(sprite_renderer = sprite_renderer)
-        window.refresh()
-    sdl2.SDL_Delay(20)
+        sdl2.SDL_Delay(90)
+    

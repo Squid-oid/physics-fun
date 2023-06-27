@@ -1,6 +1,6 @@
 import numpy as np
 import sdl2.ext
-import copy
+import Timestep as ts
 
 ###########################################################################
 # World object classes                                                    #
@@ -184,10 +184,15 @@ class Ball(W_object):
         args : List of Dictionaries
             A list, if passed correctly it should contain a dictionary with an entry keyed "barriers" containing a list of Barriers  
         """
-        self.coord = self.coord + self.vel
+        stepper = args['stepper']
+        stepsize = stepper.h
+        self.coord = self.coord + stepsize*self.vel
         bars = args["barriers"]
         for bar in bars:
             self.bar_collide(bar)
+
 ##########################################################################
 # Collider Class, used in Objects for generic collision detection        #
 ##########################################################################
+
+## Not yet implemented lmaoski ##
