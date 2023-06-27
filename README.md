@@ -4,7 +4,7 @@ A little project to build a physics engine and use it in a small demo game
 # Todo
 Phase 0 (Balls in Box);
 1. ~~Add proper comments to code already present~~
-2. Reevaluate the nessecity of the CVector Vector handling
+2. ~~Reevaluate the necessity of the CVector Vector handling~~ Removed CVector usage
 3. Change refresh() actions over to using the TimeFuncs.timestep() function, as well as being tied to the system clock instead of framerate
 4. Implement and test bsic ball on ball collision
 5. Allow free selection of Ball Size
