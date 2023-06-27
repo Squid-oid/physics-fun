@@ -9,15 +9,15 @@ class W_object():
     """
     Superclass for all game/physics objects handles coordinate, velocity and sprite storage by default
     """
-    def __init__(self, coord:'Coordinate' = None, vel:'Velocity' = None, sprite:sdl2.ext.sprite = None):
+    def __init__(self, coord:np.mat = None, vel:np.mat = None, sprite:sdl2.ext.sprite = None):
         """
         Initializes a new W_object object at the coordinates, velocity and sprite provided
 
         Parameters
         ----------
-        coord : W_object.Coordinate
+        coord : np.mat/List[float]
             The coordinates of the object, if none is given the object will be at the origin
-        vel : W_object.Velocity
+        vel : np.mat/List[float]
             The velocity of the object, if none is given the object will have no velocity
         sprite : sdl2.ext.sprite
             The sprite of the object, if none is given the object has no sprite and wil not draw
@@ -39,7 +39,7 @@ class W_object():
         sprite_renderer : sdl2.ext.SpriteRenderSystem
             The Sprite renderer with which to draw the sprite
         """
-        sprite_renderer.render(self.sprite, round(self.coord.get_x()), round(self.coord.get_y()))
+        sprite_renderer.render(self.sprite, round(self.coord[0,0]), round(self.coord[0,1]))
 
     def refresh(self, args):
         """
@@ -56,15 +56,15 @@ class Barrier(W_object):
     """
     A W_object subclass that implements Barriers which collide with everything behind them
     """
-    def __init__(self, coord:'Coordinate' = None, vel:'Velocity' = None, sprite:sdl2.ext.sprite = None, angle:float = 0, fact:sdl2.ext.SpriteFactory = None):
+    def __init__(self, coord:np.mat = None, vel:np.mat = None, sprite:sdl2.ext.sprite = None, angle:float = 0, fact:sdl2.ext.SpriteFactory = None):
         """
         Initializes a new Barrier object at the coordinates coord, the barrier extends infinetly in each direction and collides with everything behind it 
         
         Parameters
         ----------
-        coord : Coordinate
+        coord : numpy.mat/List[float]
             The coordinate at which the Barrier is centered
-        vel : Velocity
+        vel : numpy.mat/List[float]
             The velocity at which the Barrier would move if it could move
         sprite : sdl2.ext.sprite
             The sprite which the barrier wil be represented by
@@ -79,8 +79,8 @@ class Barrier(W_object):
         directed_normal = [sin, -cos]
         directed_tangent = [cos, sin]
         
-        coord = Coordinate(coord)
-        vel = Velocity(vel)
+        coord = np.mat(coord)
+        vel = np.mat(vel)
 
         if sprite is None:
             base_sprites = sdl2.ext.Resources(__file__, "basesprites")
@@ -105,22 +105,22 @@ class Ball(W_object):
     """
     A W_object subclass that moves around and bounces off Barriers
     """
-    def __init__(self, coord:'Coordinate' = None, vel:'Velocity' = None):
+    def __init__(self, coord:np.mat = None, vel:'Velocity' = None):
         """
         Initializes a new Ball object at the provided Coordinates with the provided Velocity
 
         Parameters
         ----------
-        coord : Coordinate
+        coord : np.mat/List[int]
             The coordinate at which to initiliaze the Ball, if none is provided it is created at the origin
-        vel : Velocity
+        vel : np.mat/List[int]
             The initial velocity, if none is provided the Ball is stationary
         """
         base_sprites = sdl2.ext.Resources(__file__, "basesprites")
         sprite = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE).from_image(base_sprites.get_path("ball.bmp"))
         
-        coord = Coordinate(coord)
-        vel = Velocity(vel)
+        coord = np.mat(coord)
+        vel = np.mat(vel)
 
         self.radius = 10
         super().__init__(coord = coord, vel = vel, sprite = sprite)
@@ -139,10 +139,10 @@ class Ball(W_object):
         overlap : numpy.mat 
             The maximum overlap in vector form, directed such that a negative overlap implies that the two are not touching yet
         """
-        delta = CVector(self.coord.delta(bar.coord))
-        proj_delta = CVector([delta.transform(bar.mat)[0,0], 0])
-        proj_gap = proj_delta - CVector([self.radius, 0])
-        overlap = np.matmul(proj_gap.vec, bar.mat)
+        delta = self.coord - bar.coord
+        proj_delta = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(delta)))
+        proj_gap = proj_delta - np.mat([self.radius, 0])
+        overlap = np.matmul(proj_gap, bar.mat)
         return overlap
     
     def bar_collide(self:'Ball', bar:Barrier):
@@ -159,17 +159,17 @@ class Ball(W_object):
         - : bool 
             Wether or not the Ball collided with the Barrier
         """
-        delta = CVector(self.coord.delta(bar.coord))
-        proj_delta = CVector([delta.transform(bar.mat)[0,0], 0])
-        proj_gap = proj_delta - CVector([self.radius, 0])
-        if proj_gap.vec[0,0] <= 0 :
-            proj_vel = CVector(self.vel.transform(bar.mat))
-            proj_vel.vec[0,0] = -proj_vel.vec[0,0]
-            self.vel = Velocity(np.matmul(proj_vel.vec, bar.mat))
+        delta = self.coord - bar.coord
+        proj_delta = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(delta)))
+        proj_gap = np.mat([proj_delta[0,0] - self.radius, 0])
+        if proj_gap[0,0] <= 0 :
+            proj_vel = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(self.vel)))
+            proj_vel[0,0] = -proj_vel[0,0]
+            self.vel = np.matmul(proj_vel, bar.mat)
 
-            proj_coord = CVector(self.coord.transform(bar.mat))
+            proj_coord = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(self.coord)))
             proj_coord = proj_coord - proj_gap
-            self.coord = Coordinate(np.matmul(proj_coord.vec, bar.mat))
+            self.coord = np.matmul(proj_coord, bar.mat)
             return True
         
         else:
