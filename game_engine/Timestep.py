@@ -34,7 +34,6 @@ class Time_Funcs:
             logging.warning('Negative or zero stepsize found at time: ' + str(t))
         self.h = h
         self.t = t
-        print(h)
         return h
 
     def setStepSize(self, h:float):
