@@ -1,6 +1,7 @@
 import numpy as np
 import sdl2.ext
 import Timestep as ts
+from typing import cast
 
 ###########################################################################
 # World object classes                                                    #
@@ -184,7 +185,7 @@ class Ball(W_object):
         args : List of Dictionaries
             A list, if passed correctly it should contain a dictionary with an entry keyed "barriers" containing a list of Barriers  
         """
-        stepper = args['stepper']
+        stepper = cast(ts.Time_Funcs, args['stepper'])
         stepsize = stepper.h
         self.coord = self.coord + stepsize*self.vel
         bars = args["barriers"]

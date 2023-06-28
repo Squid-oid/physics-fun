@@ -55,6 +55,4 @@ while(game_running):
         obj.refresh(args)
     sprite_renderer.render(bckg)
     for obj in objects:
-        obj.draw(sprite_renderer = sprite_renderer)
-        sdl2.SDL_Delay(90)
-    
+        obj.draw(sprite_renderer = sprite_renderer)    
