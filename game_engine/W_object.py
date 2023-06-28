@@ -169,8 +169,8 @@ class Ball(W_object):
             self.vel = np.matmul(proj_vel, bar.mat)
 
             proj_coord = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(self.coord)))
-            proj_coord = proj_coord - proj_gap
-            self.coord = np.matmul(proj_coord, bar.mat)
+            proj_coord = proj_coord - 2*proj_gap                    #The minus 2 factor here makes the ball bounce off the wall continuing it's post reflection path
+            self.coord = np.matmul(proj_coord, bar.mat)             #This means that the balls path will progress exactly the same regardless of what frame rate the program runs at
             return True
         
         else:
@@ -189,8 +189,15 @@ class Ball(W_object):
         stepsize = stepper.h
         self.coord = self.coord + stepsize*self.vel
         bars = args["barriers"]
-        for bar in bars:
-            self.bar_collide(bar)
+
+        collided = True
+        while collided is True :
+            collided = False
+            for bar in bars:
+                if self.bar_collide(bar):                   #If a collision occurs a recheck happens in case another collision is caused by the first one resolving
+                    collided = True
+
+
 
 ##########################################################################
 # Collider Class, used in Objects for generic collision detection        #
