@@ -187,7 +187,11 @@ class Ball(W_object):
         """
         stepper = cast(ts.Time_Funcs, args['stepper'])
         stepsize = stepper.h
-        self.coord = self.coord + stepsize*self.vel
+        state = np.transpose(np.concatenate((self.coord, self.vel), axis = 1))
+        f_mat = np.zeros([4,4])
+        f_mat[0:2,2:4] = np.identity(2)
+        state = np.transpose(stepper.time_step(f  = f_mat, u = state))
+        [self.coord, self.vel] = np.split(state,[2], axis = 1)
         bars = args["barriers"]
 
         collided = True
