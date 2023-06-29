@@ -57,7 +57,7 @@ class Time_Funcs:
         f : numpy.matrix or array that can be used as matrix
             Derivative matrix
         u : numpy.matrix or array that can be used as matrix
-            Initial state for some variable or collection of variables
+            State Space
             
         Returns
         -------
@@ -65,7 +65,6 @@ class Time_Funcs:
             Updated state
         """
         if h is None: h = self.h
-         
         f = np.mat(f)
         u = np.mat(u)
         unew = np.linalg.solve(np.eye(f.shape[0]) - self.h*f, u)
