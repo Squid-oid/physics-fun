@@ -123,7 +123,7 @@ class Ball(W_object):
         coord = np.mat(coord)
         vel = np.mat(vel)
 
-        self.radius = 10
+        self.radius = 5
         super().__init__(coord = coord, vel = vel, sprite = sprite)
 
     def bar_overlap(self:'Ball', bar:Barrier):
@@ -176,6 +176,43 @@ class Ball(W_object):
         else:
             return False
     
+
+    def ball_collide(self:'Ball', other:'Ball'):
+        if other is self:
+            return False
+        else:
+            delta = -self.coord + other.coord
+            dist = np.linalg.norm(delta)
+            overlap = dist - self.radius - other.radius
+            if overlap < 0 : 
+                print(overlap)
+                base_e_1 = delta/dist                           #The normalized basis vector in the direction of the other balls center from this balls center
+                base_e_2 = np.mat([base_e_1[0,1], -base_e_1[0,0]])      #Arbitrary normalized right angle basis vector to e1
+                base = np.concatenate((base_e_1, base_e_2))
+                               
+                proj_vel = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(self.vel)))
+                proj_o_vel = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(other.vel)))
+                combo_vel = proj_vel[0,0] + proj_o_vel[0,0]
+                [proj_vel[0,0], proj_o_vel[0,0]] = [proj_o_vel[0,0], proj_vel[0,0]]
+
+                elapsed_time = overlap/combo_vel
+
+                other.vel = np.matmul(proj_o_vel, base)
+                self.vel = np.matmul(proj_vel, base)
+
+                print(self.vel)
+                print(other.vel)
+
+                proj_coord = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(self.coord)))
+                proj_coord = proj_coord + np.mat([overlap,0]) + np.mat([elapsed_time*proj_vel[0,0]]) #The minus 2 factor here makes the ball bounce off the wall continuing it's post reflection path
+                proj_o_coord = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(other.coord)))
+                proj_o_coord = proj_o_coord - np.mat([overlap,0]) + np.mat([elapsed_time*proj_o_vel[0,0]]) #The minus 2 factor here makes the ball bounce off the wall continuing it's post reflection path
+
+                other.coord = np.matmul(proj_o_coord, base)
+                self.coord = np.matmul(proj_coord, base)             #This means that the balls path will progress exactly the same regardless of what frame rate the program runs at 
+                return True
+            return False  
+
     def refresh(self, args):
         """
         Overrides the defualt refresh to create a new one which moves the Ball and checks if it has collided with any barriers
@@ -186,19 +223,22 @@ class Ball(W_object):
             A list, if passed correctly it should contain a dictionary with an entry keyed "barriers" containing a list of Barriers  
         """
         stepper = cast(ts.Time_Funcs, args['stepper'])
-        stepsize = stepper.h
         state = np.transpose(np.concatenate((self.coord, self.vel), axis = 1))
         f_mat = np.zeros([4,4])
         f_mat[0:2,2:4] = np.identity(2)
         state = np.transpose(stepper.time_step(f  = f_mat, u = state))
         [self.coord, self.vel] = np.split(state,[2], axis = 1)
         bars = args["barriers"]
+        balls = args["balls"]
 
         collided = True
         while collided is True :
             collided = False
             for bar in bars:
                 if self.bar_collide(bar):                   #If a collision occurs a recheck happens in case another collision is caused by the first one resolving
+                    collided = True
+            for ball in balls:
+                if self.ball_collide(ball):                   #If a collision occurs a recheck happens in case another collision is caused by the first one resolving
                     collided = True
 
 
