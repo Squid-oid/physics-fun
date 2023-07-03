@@ -6,9 +6,9 @@ Phase 0 (Balls in Box);
 1. ~~Add proper comments to code already present~~
 2. ~~Reevaluate the necessity of the CVector Vector handling~~ [Removed CVector usage]
 3. ~~Change refresh() actions over to using the TimeFuncs.timestep() function, as well as being tied to the system clock instead of framerate~~ [Sys Clock tied, refresh fixed in World_Objects.Ball which is the only object with proper refresh so far]
-4. Implement and test bsic ball on ball collision
+4. ~~Implement and test bsic ball on ball collision~~
 5. Allow free selection of Ball Size
-6. [Maybe] implement refresh() new collision rechecking to allow a Ball object to continue bouncing multiple times in one refresh, [Maybe] implement collision based physics ticks rather than frame based ones, ie extrapolate object paths until first collision/(lazily possible collision using event horizon) and do a physics refresh exactly at that point to reduce tick frequency.
+6. ~~[Maybe] implement refresh() new collision rechecking to allow a Ball object to continue bouncing multiple times in one refresh~~, [Maybe] implement collision based physics ticks rather than frame based ones, ie extrapolate object paths until first collision/(lazily possible collision using event horizon) and do a physics refresh exactly at that point to reduce tick frequency.
 7. Fix Basic Dynamic Sprite Generation for Barriers and Balls
 8. Fix gfx bugs
 
