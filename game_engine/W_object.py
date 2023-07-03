@@ -106,7 +106,7 @@ class Ball(W_object):
     """
     A W_object subclass that moves around and bounces off Barriers
     """
-    def __init__(self, coord:np.mat = None, vel:np.mat = None):
+    def __init__(self, coord:np.mat = None, vel:np.mat = None, radius:int = 5):
         """
         Initializes a new Ball object at the provided Coordinates with the provided Velocity
 
@@ -116,6 +116,8 @@ class Ball(W_object):
             The coordinate at which to initiliaze the Ball, if none is provided it is created at the origin
         vel : np.mat/List[int]
             The initial velocity, if none is provided the Ball is stationary
+        radius : int
+            The radius of the ball
         """
         base_sprites = sdl2.ext.Resources(__file__, "basesprites")
         sprite = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE).from_image(base_sprites.get_path("ball.bmp"))
@@ -123,7 +125,7 @@ class Ball(W_object):
         coord = np.mat(coord)
         vel = np.mat(vel)
 
-        self.radius = 5
+        self.radius = radius
         super().__init__(coord = coord, vel = vel, sprite = sprite)
 
     def bar_overlap(self:'Ball', bar:Barrier):
@@ -153,7 +155,7 @@ class Ball(W_object):
         Parameters
         ----------
         bar : W_object.Barrier
-            The barrier to check overlap with
+            The barrier to collide with
             
         Returns
         -------
@@ -178,6 +180,19 @@ class Ball(W_object):
     
 
     def ball_collide(self:'Ball', other:'Ball'):
+        """
+        Handles a ball on ball collision
+
+        Parameters
+        ----------
+        other : W_object.Ball
+            The Ball to collide  with
+            
+        Returns
+        -------
+        - : bool 
+            Wether or not the Ball collided with the Barrier
+        """
         if other is self:
             return False
         else:
