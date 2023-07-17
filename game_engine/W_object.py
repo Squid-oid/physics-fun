@@ -2,6 +2,7 @@ import numpy as np
 import sdl2.ext
 import Timestep as ts
 from typing import cast
+from PIL import Image
 
 ###########################################################################
 # World object classes                                                    #
@@ -119,14 +120,20 @@ class Ball(W_object):
         radius : int
             The radius of the ball
         """
-        base_sprites = sdl2.ext.Resources(__file__, "basesprites")
-        sprite = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE).from_image(base_sprites.get_path("ball.bmp"))
-        
         coord = np.mat(coord)
         vel = np.mat(vel)
 
         self.radius = radius
+        
+        with Image.open('game_engine\\basesprites\\ball.bmp') as im:
+            im = im.resize(size = (2*radius,2*radius), resample= Image.BILINEAR)
+            im.save('game_engine\\tempsprites\\temp.bmp', im.format)
+        temp_sprites = sdl2.ext.Resources(__file__, "tempsprites")
+        sprite = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE).from_image(temp_sprites.get_path("temp.bmp"))
         super().__init__(coord = coord, vel = vel, sprite = sprite)
+
+    def draw(self, sprite_renderer:sdl2.ext.SpriteRenderSystem):
+         sprite_renderer.render(self.sprite, round(self.coord[0,0] - self.radius), round(self.coord[0,1]- self.radius))
 
     def bar_overlap(self:'Ball', bar:Barrier):
         """
