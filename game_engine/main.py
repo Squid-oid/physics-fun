@@ -24,7 +24,7 @@ objects = []
 barriers = []
 balls = []
 
-bll = W.Ball(coord=[10,30], vel=[60,40])        #Velocitty in pixels per second
+bll = W.Ball(coord=[10,30], vel=[60,40], radius=50)        #Velocitty in pixels per second
 bll2 = W.Ball(coord=[50,32], vel=[-60,40])        #Velocitty in pixels per second
 bll3 = W.Ball(coord=[100,100], vel=[-600,400])        #Velocitty in pixels per second
 bll4 = W.Ball(coord=[50,100], vel=[-300,40])        #Velocitty in pixels per second
@@ -34,6 +34,7 @@ bndt = W.Barrier(coord = [0,0], fact = factory, angle=np.pi)
 bndl = W.Barrier(coord=[0,0], fact = factory, angle=np.pi*1/2)
 bndb = W.Barrier(coord=[640,480], fact = factory, angle= 0)
 bndr = W.Barrier(coord=[640,480], fact = factory, angle=np.pi*3/2)
+
 objects.append(bndt)
 objects.append(bndl)
 objects.append(bndb)
@@ -74,4 +75,4 @@ while(game_running):
     sprite_renderer.render(bckg)
     for obj in objects:
         obj.draw(sprite_renderer = sprite_renderer)    
-    sdl2.SDL_Delay(50)
+    sdl2.SDL_Delay(1)
