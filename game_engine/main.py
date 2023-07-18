@@ -24,10 +24,10 @@ objects = []
 barriers = []
 balls = []
 
-bll = W.Ball(coord=[10,30], vel=[60,40], radius=50)        #Velocitty in pixels per second
+bll = W.Ball(coord=[51,51], vel=[60,0], radius=50)        #Velocitty in pixels per second
 bll2 = W.Ball(coord=[50,32], vel=[-60,40])        #Velocitty in pixels per second
-bll3 = W.Ball(coord=[100,100], vel=[-600,400])        #Velocitty in pixels per second
-bll4 = W.Ball(coord=[50,100], vel=[-300,40])        #Velocitty in pixels per second
+bll3 = W.Ball(coord=[700,51], vel=[-600,0])        #Velocitty in pixels per second
+bll4 = W.Ball(coord=[300,50], vel=[-300,0])        #Velocitty in pixels per second
 bll5 = W.Ball(coord=[58,38], vel=[-60,400])        #Velocitty in pixels per second
 
 bndt = W.Barrier(coord = [0,0], fact = factory, angle=np.pi)

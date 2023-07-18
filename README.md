@@ -10,7 +10,7 @@ Phase 0 (Balls in Box);
 5. ~~Allow free selection of Ball Size~~
 6. ~~[Maybe] implement refresh() new collision rechecking to allow a Ball object to continue bouncing multiple times in one refresh~~, [Maybe] ~~implement collision based physics ticks rather than frame based ones, ie extrapolate object paths until first collision/(lazily possible collision using event horizon) and do a physics refresh exactly at that point to reduce tick frequency.~~ Second part Unfeasible at this stage
 7. ~~Fix Basic Dynamic Sprite Generation for Barriers and Balls~~
-8. Fix physics bug (Likely in collision)
+8. ~~Fix physics bug (Likely in collision)~~        RESOLVED - Double counting of certain offsets was issue
 9. Work on gfx bugs
 
 Phase 1 (Shapes in Box);

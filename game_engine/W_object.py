@@ -207,7 +207,6 @@ class Ball(W_object):
             dist = np.linalg.norm(delta)
             overlap = dist - self.radius - other.radius
             if overlap < 0 : 
-                print(overlap)
                 base_e_1 = delta/dist                           #The normalized basis vector in the direction of the other balls center from this balls center
                 base_e_2 = np.mat([base_e_1[0,1], -base_e_1[0,0]])      #Arbitrary normalized right angle basis vector to e1
                 base = np.concatenate((base_e_1, base_e_2))
@@ -222,13 +221,10 @@ class Ball(W_object):
                 other.vel = np.matmul(proj_o_vel, base)
                 self.vel = np.matmul(proj_vel, base)
 
-                print(self.vel)
-                print(other.vel)
-
                 proj_coord = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(self.coord)))
-                proj_coord = proj_coord + np.mat([overlap,0]) + np.mat([elapsed_time*proj_vel[0,0]]) #The minus 2 factor here makes the ball bounce off the wall continuing it's post reflection path
+                proj_coord = proj_coord + np.mat([overlap,0])
                 proj_o_coord = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(other.coord)))
-                proj_o_coord = proj_o_coord - np.mat([overlap,0]) + np.mat([elapsed_time*proj_o_vel[0,0]]) #The minus 2 factor here makes the ball bounce off the wall continuing it's post reflection path
+                proj_o_coord = proj_o_coord - np.mat([overlap,0])
 
                 other.coord = np.matmul(proj_o_coord, base)
                 self.coord = np.matmul(proj_coord, base)             #This means that the balls path will progress exactly the same regardless of what frame rate the program runs at 
