@@ -12,18 +12,19 @@ Phase 0 (Balls in Box);
 7. ~~Fix Basic Dynamic Sprite Generation for Barriers and Balls~~
 8. ~~Fix physics bug (Likely in collision)~~        RESOLVED - Double counting of certain offsets was issue
 9. Work on gfx bugs
+10. ~~Different weights~~
 
 Phase 1 (Shapes in Box);
 1. [Maybe] Seperate collsion detection and handling from the sprite/initialization classes so that W_Objects have a collider object as a property rather than directly holding the collsions.
 2. Create Rectangle W_object and test it's collision handling.
-3. Replace Rectangle W_object with Conc_poly object
+3. Replace Rectangle W_object with Conv_poly object
 
 Phase 2 (Good Shapes in Box);
 1. If Phase 0 - 6 or Phase 1 - 1 have not been previously completed consider doing them now, additionaly Gauss integrals for better subframe precision?
 2. Implement multiple types of object materials which give different collsion properties (elastic, semi elastic, force killing different weights etc.)
 3. Create Test Suite for all previously created work
 4. Implement External Forces, starting with gravity, maybe also Internal Value, Coordinate and Velocity dependant forces ie Electromagnetic
-5. Make one of the Shapes Controllable to provide player interaction
+5. Make one of the Shapes Controllable to provide 'player' interaction
 
 Phase 3-K (Basic Game);
 [Too far in the future and too ambitous to break down now, essentialy just create basic platformer using above tools]

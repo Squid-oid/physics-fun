@@ -107,7 +107,7 @@ class Ball(W_object):
     """
     A W_object subclass that moves around and bounces off Barriers
     """
-    def __init__(self, coord:np.mat = None, vel:np.mat = None, radius:int = 5):
+    def __init__(self, coord:np.mat = None, vel:np.mat = None, radius:int = 5, mass:float = 1.00):
         """
         Initializes a new Ball object at the provided Coordinates with the provided Velocity
 
@@ -123,6 +123,7 @@ class Ball(W_object):
         coord = np.mat(coord)
         vel = np.mat(vel)
 
+        self.mass = mass
         self.radius = radius
         
         with Image.open('game_engine\\basesprites\\ball.bmp') as im:
@@ -185,7 +186,6 @@ class Ball(W_object):
         else:
             return False
     
-
     def ball_collide(self:'Ball', other:'Ball'):
         """
         Handles a ball on ball collision
@@ -210,26 +210,40 @@ class Ball(W_object):
                 base_e_1 = delta/dist                           #The normalized basis vector in the direction of the other balls center from this balls center
                 base_e_2 = np.mat([base_e_1[0,1], -base_e_1[0,0]])      #Arbitrary normalized right angle basis vector to e1
                 base = np.concatenate((base_e_1, base_e_2))
-                               
+
+                m_a = self.mass #self.mass
+                m_b = other.mass #other.mass
+
                 proj_vel = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(self.vel)))
                 proj_o_vel = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(other.vel)))
-                combo_vel = proj_vel[0,0] + proj_o_vel[0,0]
-                [proj_vel[0,0], proj_o_vel[0,0]] = [proj_o_vel[0,0], proj_vel[0,0]]
-
+                u_a = proj_vel[0,0]
+                u_b = proj_o_vel[0,0]
+                combo_vel = u_a + u_b
                 elapsed_time = overlap/combo_vel
 
-                other.vel = np.matmul(proj_o_vel, base)
-                self.vel = np.matmul(proj_vel, base)
+                coeff_sq = m_a**2 + m_a*m_b
+                coeff_li = -2*m_a**2*u_a - 2*m_a*m_b*u_b
+                coeff_co = m_a**2*u_a**2 + 2*m_a*m_b*u_a*u_b - m_a*m_b*u_a**2
+                
+                roots = np.roots([coeff_sq, coeff_li, coeff_co])
+                v_a = min(roots)
+                v_b =  (-m_a*v_a + m_a*u_a + m_b*u_b)/(m_b)
 
+                proj_vel[0,0] = v_a
+                proj_o_vel[0,0] = v_b
+                
+                other.vel = np.matmul(proj_o_vel, base)
+                self.vel = np.matmul(proj_vel, base)               
+                
                 proj_coord = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(self.coord)))
-                proj_coord = proj_coord + np.mat([overlap,0])
+                proj_coord = proj_coord - np.mat([u_a*elapsed_time, 0]) + np.mat([v_a*elapsed_time, 0])
                 proj_o_coord = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(other.coord)))
-                proj_o_coord = proj_o_coord - np.mat([overlap,0])
+                proj_o_coord = proj_o_coord - np.mat([u_b*elapsed_time, 0]) + np.mat([v_b*elapsed_time, 0])
 
                 other.coord = np.matmul(proj_o_coord, base)
                 self.coord = np.matmul(proj_coord, base)             #This means that the balls path will progress exactly the same regardless of what frame rate the program runs at 
                 return True
-            return False  
+            return False      
 
     def refresh(self, args):
         """
@@ -257,7 +271,7 @@ class Ball(W_object):
                     collided = True
             for ball in balls:
                 if self.ball_collide(ball):                   #If a collision occurs a recheck happens in case another collision is caused by the first one resolving
-                    collided = True
+                    collided = False
 
 
 
