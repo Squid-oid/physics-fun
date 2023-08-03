@@ -2,17 +2,6 @@
 A little project to build a physics engine and use it in a small demo game
 
 # Todo
-Phase 0 (Balls in Box);
-1. ~~Add proper comments to code already present~~
-2. ~~Reevaluate the necessity of the CVector Vector handling~~ [Removed CVector usage]
-3. ~~Change refresh() actions over to using the TimeFuncs.timestep() function, as well as being tied to the system clock instead of framerate~~ [Sys Clock tied, refresh fixed in World_Objects.Ball which is the only object with proper refresh so far]
-4. ~~Implement and test bsic ball on ball collision~~
-5. ~~Allow free selection of Ball Size~~
-6. ~~[Maybe] implement refresh() new collision rechecking to allow a Ball object to continue bouncing multiple times in one refresh~~, [Maybe] ~~implement collision based physics ticks rather than frame based ones, ie extrapolate object paths until first collision/(lazily possible collision using event horizon) and do a physics refresh exactly at that point to reduce tick frequency.~~ Second part Unfeasible at this stage
-7. ~~Fix Basic Dynamic Sprite Generation for Barriers and Balls~~
-8. ~~Fix physics bug (Likely in collision)~~        RESOLVED - Double counting of certain offsets was issue
-9. Work on gfx bugs
-10. ~~Different weights~~
 
 Phase 1 (Shapes in Box);
 1. [Maybe] Seperate collsion detection and handling from the sprite/initialization classes so that W_Objects have a collider object as a property rather than directly holding the collsions.
@@ -33,9 +22,23 @@ Phase K+1 (3d Spheres);
 [Create 3d spheres in box simulation using what I've Learned]
 
 # Completed
-At the present version, (Maybe I'll version number, in which case V.0.9) I have around 400 lines of code in python using the pysdl2 library. Of these lines around 150 are from early testing before I started using pysdl2 and was using trtle for graphics output {<3 Turtle graphics my love}. I am using pysdl2 for input/output handling, ie to present my objects in a human usable form and to handle keyboard/mouse input, but will do my best to avoid using any built in object of physics handling since I want to write my own very basics physics engine. 
+At the present version, (Maybe I'll version number, in which case V.0.9.1) I have around 400 lines of code in python using the pysdl2 library. Of these lines around 150 are from early testing before I started using pysdl2 and was using trtle for graphics output {<3 Turtle graphics my love}. I am using pysdl2 for input/output handling.
 
-The code I have so far creates a small window with boundaries placed at the edges and allows a single ball to bounce around inside the boundaries. The ball is assumed to keep all of it's energy in a collision but to have it's velocity vector in the direction of the wall reversed. This code apears to be stable but has flickering in the balls presentation due to misuse of the sprite system.
+The code I have so far creates a small window with boundaries placed at the edges and allows multiple balls of varying weight and radii to bounce around off eachother in fully elastic collisions.
 
 # Notes on the Project workflow
-I am working in VSCode on windows 10 using conda (miniconda3) to manage my environment, and use primarily the VSCode git interface to manage the project with occasional tweaks through the github website :smile:
+I am working in VSCode on windows 10 using conda (miniconda3) to manage my environment, and use primarily the VSCode git interface to manage the project with occasional tweaks through the github website :smile:. After having finshed the absolute basics of the code I now want to focus on better Version Control and branching.
+
+# Previous Phases
+
+Phase 0 (Balls in Box); COMPLETE
+1. ~~Add proper comments to code already present~~
+2. ~~Reevaluate the necessity of the CVector Vector handling~~ [Removed CVector usage]
+3. ~~Change refresh() actions over to using the TimeFuncs.timestep() function, as well as being tied to the system clock instead of framerate~~ [Sys Clock tied, refresh fixed in World_Objects.Ball which is the only object with proper refresh so far]
+4. ~~Implement and test bsic ball on ball collision~~
+5. ~~Allow free selection of Ball Size~~
+6. ~~[Maybe] implement refresh() new collision rechecking to allow a Ball object to continue bouncing multiple times in one refresh~~, [Maybe] ~~implement collision based physics ticks rather than frame based ones, ie extrapolate object paths until first collision/(lazily possible collision using event horizon) and do a physics refresh exactly at that point to reduce tick frequency.~~ Second part Unfeasible at this stage
+7. ~~Fix Basic Dynamic Sprite Generation for Barriers and Balls~~
+8. ~~Fix physics bug (Likely in collision)~~        RESOLVED - Double counting of certain offsets was issue
+9. ~~Work on gfx bugs~~
+10. ~~Different weights~~
