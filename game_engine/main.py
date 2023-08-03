@@ -6,58 +6,88 @@ import numpy as np
 import Timestep as ts
 import time as time
 
-game_running = True
-RESOURCES = sdl2.ext.Resources(__file__, "basesprites")
+#################################################################
+# Mini Classes ##################################################
+
+class SoftwareRenderer(sdl2.ext.SoftwareSpriteRenderSystem):
+    def __init__(self, window):
+        super(SoftwareRenderer, self).__init__(window)
+
+    def render(self, components):
+        sdl2.ext.fill(self.surface, sdl2.ext.Color(255, 255, 255))
+        super(SoftwareRenderer, self).render(components)
+
+class r_object(sdl2.ext.Entity):
+    def __init__(self, world, object:W.W_object):
+        self.sprite = object.sprite
+
+    def cloneTo(self, object:W.W_object):
+        self.sprite = object.sprite
+
+class InitFuncs():
+    def create_objects(factory):
+     
+        objects = []
+        barriers = []
+        balls = []
+
+        bll = W.Ball(fact = factory, coord=[51,51], vel=[60,0], radius=50, mass = 100)        #Velocitty in pixels per second
+        bll2 = W.Ball(fact = factory,coord=[50,32], vel=[-60,40])        #Velocitty in pixels per second
+        bll3 = W.Ball(fact = factory , coord=[700,51], vel=[-600,0])        #Velocitty in pixels per second
+        bll4 = W.Ball(fact = factory, coord=[300,50], vel=[-300,0])        #Velocitty in pixels per second
+        bll5 = W.Ball(fact = factory, coord=[58,38], vel=[-60,400])        #Velocitty in pixels per second
+
+        bndt = W.Barrier(coord = [0,0], fact = factory, angle=np.pi)
+        bndl = W.Barrier(coord=[0,0], fact = factory, angle=np.pi*1/2)
+        bndb = W.Barrier(coord=[800,600], fact = factory, angle= 0)
+        bndr = W.Barrier(coord=[800,600], fact = factory, angle=np.pi*3/2)
+
+        objects.append(bndt)
+        objects.append(bndl)
+        objects.append(bndb)
+        objects.append(bndr)
+
+        objects.append(bll)
+        objects.append(bll2)
+        objects.append(bll3)
+        objects.append(bll4)
+        objects.append(bll5)
+
+        balls.append(bll)
+        balls.append(bll2)
+        balls.append(bll3)
+        balls.append(bll4)
+        balls.append(bll5)
+
+        barriers.append(bndt)
+        barriers.append(bndl)
+        barriers.append(bndb)
+        barriers.append(bndr)
+
+        return [objects, balls, barriers]
+
+#######################################################
+# Code begins #########################################
+
 sdl2.ext.init()
 
-window = sdl2.ext.Window("Test Window", size=(640, 480))
+world = sdl2.ext.World()
+window = sdl2.ext.Window("The Pong Game", size=(800, 600))
 window.show()
+processor = sdl2.ext.TestEventProcessor()
+game_running = True
+
+spriterenderer = SoftwareRenderer(window)
+world.add_system(spriterenderer)
 
 factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
-sprite_renderer = factory.create_sprite_render_system(window)
+RESOURCES = sdl2.ext.Resources(__file__, "basesprites")
 bckg = factory.from_color(color=[255,255,255], size=[5000,5000])
 
-
-processor = sdl2.ext.TestEventProcessor()
-
-objects = []
-barriers = []
-balls = []
-
-bll = W.Ball(coord=[51,51], vel=[60,0], radius=50, mass = 100)        #Velocitty in pixels per second
-bll2 = W.Ball(coord=[50,32], vel=[-60,40])        #Velocitty in pixels per second
-bll3 = W.Ball(coord=[700,51], vel=[-600,0])        #Velocitty in pixels per second
-bll4 = W.Ball(coord=[300,50], vel=[-300,0])        #Velocitty in pixels per second
-bll5 = W.Ball(coord=[58,38], vel=[-60,400])        #Velocitty in pixels per second
-
-bndt = W.Barrier(coord = [0,0], fact = factory, angle=np.pi)
-bndl = W.Barrier(coord=[0,0], fact = factory, angle=np.pi*1/2)
-bndb = W.Barrier(coord=[640,480], fact = factory, angle= 0)
-bndr = W.Barrier(coord=[640,480], fact = factory, angle=np.pi*3/2)
-
-objects.append(bndt)
-objects.append(bndl)
-objects.append(bndb)
-objects.append(bndr)
-
-objects.append(bll)
-objects.append(bll2)
-objects.append(bll3)
-objects.append(bll4)
-objects.append(bll5)
-
-balls.append(bll)
-balls.append(bll2)
-balls.append(bll3)
-balls.append(bll4)
-balls.append(bll5)
-
-barriers.append(bndt)
-barriers.append(bndl)
-barriers.append(bndb)
-barriers.append(bndr)
-
-
+[objects, balls, barriers] = InitFuncs.create_objects(factory)
+r_objects = []
+for object in objects: 
+    r_objects.append(r_object(world, object))
 stepper = ts.Time_Funcs(t = time.time())
 
 refresh_args = {
@@ -69,10 +99,16 @@ refresh_args = {
 
 while(game_running):
     stepper.find_set_stepsize(time.time())
-    for obj in objects:
-        args = refresh_args[type(obj)]
-        obj.refresh(args)
-    sprite_renderer.render(bckg)
-    for obj in objects:
-        obj.draw(sprite_renderer = sprite_renderer)
-    sdl2.SDL_Delay(1)
+    events = sdl2.ext.get_events()
+    for event in events:
+        if event.type == sdl2.SDL_QUIT:
+            game_running = False
+            break
+    for [object, r_obj] in zip(objects, r_objects):
+        object.refresh(refresh_args[type(object)])
+        r_obj = r_obj.cloneTo(object)
+    world.process()
+
+    
+        
+        

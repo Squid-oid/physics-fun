@@ -32,17 +32,6 @@ class W_object():
         self.vel = vel
         self.sprite = sprite
 
-    def draw(self, sprite_renderer:sdl2.ext.SpriteRenderSystem):
-        """
-        Draws the object using the sprite renderer provided
-
-        Parameters
-        ----------
-        sprite_renderer : sdl2.ext.SpriteRenderSystem
-            The Sprite renderer with which to draw the sprite
-        """
-        sprite_renderer.render(self.sprite, round(self.coord[0,0]), round(self.coord[0,1]))
-
     def refresh(self, args):
         """
         Provides a default implementation of refreshing the object (taking a new timestep)
@@ -87,27 +76,15 @@ class Barrier(W_object):
         if sprite is None:
             base_sprites = sdl2.ext.Resources(__file__, "basesprites")
             sprite = fact.from_image(base_sprites.get_path("barrier.bmp"))
-            
-        
+            sprite.position = -10000,-10000
         self.mat = np.mat([directed_normal,directed_tangent])
         super().__init__(coord = coord, vel = vel, sprite = sprite)
             
-    def draw(self, sprite_renderer:sdl2.ext.SpriteRenderSystem):
-        """
-        Draws the Barrier using the SpriteRenderSystem provided (Does not actually do this right now)
-
-        Parameters
-        ----------
-        sprite_renderer : sdl2.ext.SpriteRenderSystem
-            The renderer with which to draw the Barrier
-        """
-        pass
-
 class Ball(W_object):
     """
     A W_object subclass that moves around and bounces off Barriers
     """
-    def __init__(self, coord:np.mat = None, vel:np.mat = None, radius:int = 5, mass:float = 1.00):
+    def __init__(self, fact:sdl2.ext.SpriteFactory, coord:np.mat = None, vel:np.mat = None, radius:int = 5, mass:float = 1.00):
         """
         Initializes a new Ball object at the provided Coordinates with the provided Velocity
 
@@ -130,11 +107,9 @@ class Ball(W_object):
             im = im.resize(size = (2*radius,2*radius), resample= Image.BILINEAR)
             im.save('game_engine\\tempsprites\\temp.bmp', im.format)
         temp_sprites = sdl2.ext.Resources(__file__, "tempsprites")
-        sprite = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE).from_image(temp_sprites.get_path("temp.bmp"))
+        sprite = fact.from_image(temp_sprites.get_path("temp.bmp"))
         super().__init__(coord = coord, vel = vel, sprite = sprite)
-
-    def draw(self, sprite_renderer:sdl2.ext.SpriteRenderSystem):
-         sprite_renderer.render(self.sprite, round(self.coord[0,0] - self.radius), round(self.coord[0,1]- self.radius))
+        sprite.coord = coord - np.mat([radius, radius])
 
     def bar_overlap(self:'Ball', bar:Barrier):
         """
@@ -272,9 +247,9 @@ class Ball(W_object):
             for ball in balls:
                 if self.ball_collide(ball):                   #If a collision occurs a recheck happens in case another collision is caused by the first one resolving
                     collided = False
-
-
-
+        
+        self.sprite.position = round(self.coord[0,0] - self.radius), round(self.coord[0,1] - self.radius)
+    
 ##########################################################################
 # Collider Class, used in Objects for generic collision detection        #
 ##########################################################################
