@@ -72,7 +72,7 @@ class InitFuncs():
 sdl2.ext.init()
 
 world = sdl2.ext.World()
-window = sdl2.ext.Window("The Pong Game", size=(800, 600))
+window = sdl2.ext.Window("Box", size=(800, 600))
 window.show()
 processor = sdl2.ext.TestEventProcessor()
 game_running = True
@@ -108,7 +108,3 @@ while(game_running):
         object.refresh(refresh_args[type(object)])
         r_obj = r_obj.cloneTo(object)
     world.process()
-
-    
-        
-        

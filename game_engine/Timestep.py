@@ -65,7 +65,7 @@ class Time_Funcs:
             Updated state
         """
         if h is None: h = self.h
-        f = np.mat(f)
-        u = np.mat(u)
+        f = np.asmatrix(f)
+        u = np.asmatrix(u)
         unew = np.linalg.solve(np.eye(f.shape[0]) - self.h*f, u)
         return unew

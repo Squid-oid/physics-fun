@@ -11,7 +11,7 @@ class W_object():
     """
     Superclass for all game/physics objects handles coordinate, velocity and sprite storage by default
     """
-    def __init__(self, coord:np.mat = None, vel:np.mat = None, sprite:sdl2.ext.sprite = None):
+    def __init__(self, coord:np.matrix = None, vel:np.matrix = None, sprite:sdl2.ext.sprite = None):
         """
         Initializes a new W_object object at the coordinates, velocity and sprite provided
 
@@ -25,9 +25,9 @@ class W_object():
             The sprite of the object, if none is given the object has no sprite and wil not draw
         """
         if coord is None:
-            coord = np.mat([0,0])
+            coord = np.asmatrix([0,0])
         if vel is None:
-            vel = np.mat([0,0])
+            vel = np.asmatrix([0,0])
         self.coord = coord
         self.vel = vel
         self.sprite = sprite
@@ -47,7 +47,7 @@ class Barrier(W_object):
     """
     A W_object subclass that implements Barriers which collide with everything behind them
     """
-    def __init__(self, coord:np.mat = None, vel:np.mat = None, sprite:sdl2.ext.sprite = None, angle:float = 0, fact:sdl2.ext.SpriteFactory = None):
+    def __init__(self, coord:np.asmatrix = None, vel:np.asmatrix = None, sprite:sdl2.ext.sprite = None, angle:float = 0, fact:sdl2.ext.SpriteFactory = None):
         """
         Initializes a new Barrier object at the coordinates coord, the barrier extends infinetly in each direction and collides with everything behind it 
         
@@ -70,21 +70,21 @@ class Barrier(W_object):
         directed_normal = [sin, -cos]
         directed_tangent = [cos, sin]
         
-        coord = np.mat(coord)
-        vel = np.mat(vel)
+        coord = np.asmatrix(coord)
+        vel = np.asmatrix(vel)
 
         if sprite is None:
             base_sprites = sdl2.ext.Resources(__file__, "basesprites")
             sprite = fact.from_image(base_sprites.get_path("barrier.bmp"))
             sprite.position = -10000,-10000
-        self.mat = np.mat([directed_normal,directed_tangent])
+        self.mat = np.asmatrix([directed_normal,directed_tangent])
         super().__init__(coord = coord, vel = vel, sprite = sprite)
             
 class Ball(W_object):
     """
     A W_object subclass that moves around and bounces off Barriers
     """
-    def __init__(self, fact:sdl2.ext.SpriteFactory, coord:np.mat = None, vel:np.mat = None, radius:int = 5, mass:float = 1.00):
+    def __init__(self, fact:sdl2.ext.SpriteFactory, coord:np.asmatrix = None, vel:np.asmatrix = None, radius:int = 5, mass:float = 1.00):
         """
         Initializes a new Ball object at the provided Coordinates with the provided Velocity
 
@@ -97,8 +97,8 @@ class Ball(W_object):
         radius : int
             The radius of the ball
         """
-        coord = np.mat(coord)
-        vel = np.mat(vel)
+        coord = np.asmatrix(coord)
+        vel = np.asmatrix(vel)
 
         self.mass = mass
         self.radius = radius
@@ -109,7 +109,7 @@ class Ball(W_object):
         temp_sprites = sdl2.ext.Resources(__file__, "tempsprites")
         sprite = fact.from_image(temp_sprites.get_path("temp.bmp"))
         super().__init__(coord = coord, vel = vel, sprite = sprite)
-        sprite.coord = coord - np.mat([radius, radius])
+        sprite.coord = coord - np.asmatrix([radius, radius])
 
     def bar_overlap(self:'Ball', bar:Barrier):
         """
@@ -127,7 +127,7 @@ class Ball(W_object):
         """
         delta = self.coord - bar.coord
         proj_delta = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(delta)))
-        proj_gap = proj_delta - np.mat([self.radius, 0])
+        proj_gap = proj_delta - np.asmatrix([self.radius, 0])
         overlap = np.matmul(proj_gap, bar.mat)
         return overlap
     
@@ -147,7 +147,7 @@ class Ball(W_object):
         """
         delta = self.coord - bar.coord
         proj_delta = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(delta)))
-        proj_gap = np.mat([proj_delta[0,0] - self.radius, 0])
+        proj_gap = np.asmatrix([proj_delta[0,0] - self.radius, 0])
         if proj_gap[0,0] <= 0 :
             proj_vel = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(self.vel)))
             proj_vel[0,0] = -proj_vel[0,0]
@@ -183,7 +183,7 @@ class Ball(W_object):
             overlap = dist - self.radius - other.radius
             if overlap < 0 : 
                 base_e_1 = delta/dist                           #The normalized basis vector in the direction of the other balls center from this balls center
-                base_e_2 = np.mat([base_e_1[0,1], -base_e_1[0,0]])      #Arbitrary normalized right angle basis vector to e1
+                base_e_2 = np.asmatrix([base_e_1[0,1], -base_e_1[0,0]])      #Arbitrary normalized right angle basis vector to e1
                 base = np.concatenate((base_e_1, base_e_2))
 
                 m_a = self.mass #self.mass
@@ -211,9 +211,9 @@ class Ball(W_object):
                 self.vel = np.matmul(proj_vel, base)               
                 
                 proj_coord = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(self.coord)))
-                proj_coord = proj_coord - np.mat([u_a*elapsed_time, 0]) + np.mat([v_a*elapsed_time, 0])
+                proj_coord = proj_coord - np.asmatrix([u_a*elapsed_time, 0]) + np.asmatrix([v_a*elapsed_time, 0])
                 proj_o_coord = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(other.coord)))
-                proj_o_coord = proj_o_coord - np.mat([u_b*elapsed_time, 0]) + np.mat([v_b*elapsed_time, 0])
+                proj_o_coord = proj_o_coord - np.asmatrix([u_b*elapsed_time, 0]) + np.asmatrix([v_b*elapsed_time, 0])
 
                 other.coord = np.matmul(proj_o_coord, base)
                 self.coord = np.matmul(proj_coord, base)             #This means that the balls path will progress exactly the same regardless of what frame rate the program runs at 
