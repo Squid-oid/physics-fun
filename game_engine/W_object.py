@@ -75,7 +75,7 @@ class Barrier(W_object):
 
         if sprite is None:
             base_sprites = sdl2.ext.Resources(__file__, "basesprites")
-            sprite = fact.from_image(base_sprites.get_path("barrier.bmp"))
+            sprite = fact.from_image(base_sprites.get_path("barrier.png"))
             sprite.position = -10000,-10000
         self.mat = np.asmatrix([directed_normal,directed_tangent])
         super().__init__(coord = coord, vel = vel, sprite = sprite)
@@ -103,11 +103,11 @@ class Ball(W_object):
         self.mass = mass
         self.radius = radius
         
-        with Image.open('game_engine\\basesprites\\ball.bmp') as im:
+        with Image.open('game_engine\\basesprites\\ball.png') as im:
             im = im.resize(size = (2*radius,2*radius), resample= Image.BILINEAR)
-            im.save('game_engine\\tempsprites\\temp.bmp', im.format)
-        temp_sprites = sdl2.ext.Resources(__file__, "tempsprites")
-        sprite = fact.from_image(temp_sprites.get_path("temp.bmp"))
+            im.save('game_engine\\tempsprites\\temp.png')
+        temp_sprites = sdl2.ext.Resources("game_engine\\tempsprites")
+        sprite = fact.from_image(temp_sprites.get_path("temp.png"))
         super().__init__(coord = coord, vel = vel, sprite = sprite)
         sprite.coord = coord - np.asmatrix([radius, radius])
 

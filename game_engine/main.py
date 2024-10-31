@@ -31,11 +31,11 @@ class InitFuncs():
         barriers = []
         balls = []
 
-        bll = W.Ball(fact = factory, coord=[51,51], vel=[60,0], radius=50, mass = 100)        #Velocitty in pixels per second
-        bll2 = W.Ball(fact = factory,coord=[50,32], vel=[-60,40])        #Velocitty in pixels per second
-        bll3 = W.Ball(fact = factory , coord=[700,51], vel=[-600,0])        #Velocitty in pixels per second
-        bll4 = W.Ball(fact = factory, coord=[300,50], vel=[-300,0])        #Velocitty in pixels per second
-        bll5 = W.Ball(fact = factory, coord=[58,38], vel=[-60,400])        #Velocitty in pixels per second
+        bll = W.Ball(fact = factory, coord=[51,51], vel=[60,0], radius=50, mass = 100)        #Velocity in pixels per second
+        bll2 = W.Ball(fact = factory,coord=[50,32], vel=[-60,40])        #Velocity in pixels per second
+        bll3 = W.Ball(fact = factory , coord=[700,51], vel=[-600,0])        #Velocity in pixels per second
+        bll4 = W.Ball(fact = factory, coord=[300,50], vel=[-300,0])        #Velocity in pixels per second
+        bll5 = W.Ball(fact = factory, coord=[58,38], vel=[-60,400])        #Velocity in pixels per second
 
         bndt = W.Barrier(coord = [0,0], fact = factory, angle=np.pi)
         bndl = W.Barrier(coord=[0,0], fact = factory, angle=np.pi*1/2)
