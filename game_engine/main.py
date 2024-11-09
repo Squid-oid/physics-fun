@@ -42,6 +42,11 @@ class InitFuncs():
         bndb = W.Barrier(coord=[800,600], fact = factory, angle= 0)
         bndr = W.Barrier(coord=[800,600], fact = factory, angle=np.pi*3/2)
 
+        tri1_coords = np.asmatrix([[0,0],[0,20],[20,0]])
+        tri1 = W.Tri(fact = factory, coords=tri1_coords)
+
+        objects.append(tri1)
+
         objects.append(bndt)
         objects.append(bndl)
         objects.append(bndb)
@@ -94,6 +99,7 @@ refresh_args = {
     W.Ball: {'barriers': barriers, 'stepper' : stepper, 'balls' : balls},
     W.Barrier: {},
     W.W_object: {},
+    W.Tri: {}
 }
 
 
@@ -108,3 +114,4 @@ while(game_running):
         object.refresh(refresh_args[type(object)])
         r_obj = r_obj.cloneTo(object)
     world.process()
+    

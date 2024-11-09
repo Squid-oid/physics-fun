@@ -4,6 +4,7 @@ import Timestep as ts
 from typing import cast
 from PIL import Image
 
+
 ###########################################################################
 # World object classes                                                    #
 ###########################################################################
@@ -249,9 +250,168 @@ class Ball(W_object):
                     collided = False
         
         self.sprite.position = round(self.coord[0,0] - self.radius), round(self.coord[0,1] - self.radius)
-    
+
+
+class Tri(W_object):
+    @staticmethod
+    def generateSprite(coords, fact):
+        """
+        Generates a sprite from the coordinates of the corners of a triangle
+        """
+        ## Finds the size of the bounding rectangle
+        bounding_box = np.max(coords,0) - np.min(coords,0)
+        
+        ## Creates an array of overscaled but correct size that we will then scale down(naive way to improve aliasing)
+        sz1 = int(np.rint(bounding_box[0,0]*5))
+        sz2 = int(np.rint(bounding_box[0,1]*5))
+        arr = np.asmatrix(np.zeros((sz1,sz2)))
+
+        ## Finds the edges of the triangle (vector form)
+        side1 = coords[0,:] - coords[1,:]
+        side2 = coords[1,:] - coords[2,:]
+        side3 = coords[2,:] - coords[0,:]
+
+        ## Finds orthogonal outwardsfacing vector
+        orth1 = np.asmatrix([side1[0,1], -side1[0,0]])
+        orth2 = np.asmatrix([side2[0,1], -side2[0,0]])
+        orth3 = np.asmatrix([side3[0,1], -side3[0,0]])
+
+        ## Now we wish to shade all pixels that are within the triangle, we do this by checking each pixel against the polytope criterion
+        for i in range(0,sz1):
+            for j in range(0,sz2):
+                x = np.asmatrix([i,j]).T / 5 #- np.min(coords,0).T
+                cond1 = all(orth1*x <= orth1*coords[1,:].T)
+                cond2 = all(orth2*x <= orth2*coords[2,:].T)
+                cond3 = all(orth3*x <= orth3*coords[0,:].T)
+
+                if all([cond1,cond2,cond3]):
+                    arr[i,j] = 255
+
+        ## Now we use the array together with pysdl to create a sprite
+        arr = np.flip(arr,0)
+        arr = arr.reshape(sz1*sz2)
+        arr = np.pad(arr.T, ((0,0),(3,0)))
+        arr.shape = (sz1,sz2,4)
+        upscaled_img = Image.fromarray(arr.astype(np.uint8))
+                
+        sprite = fact.from_image(upscaled_img)
+        upscaled_img.save('game_engine\\tempsprites\\temp2.png')
+        return sprite
+
+
+    def __init__(self, fact:sdl2.ext.SpriteFactory, coords:np.asmatrix = None, vel:np.asmatrix = None, mass:float = 1.00):
+        """
+        Initializes a new Triangle object at the provided Coordinates with the provided Velocity
+
+        Parameters
+        ----------
+        coords : np.mat
+            The coordinates of the corners of the triangle, each row is a corner
+        vel : np.mat/List[int]
+            The initial velocity, if none is provided the Ball is stationary
+        """
+        self.coords = np.asmatrix(coords)
+        vel = np.asmatrix(vel)
+
+        self.mass = mass
+
+        avg_point = np.ones((1,3)) @ self.coords / 3
+
+        print("Attempting to Generate Sprite")
+        sprite = Tri.generateSprite(coords, fact)
+        super().__init__(coord = avg_point, vel = vel, sprite = sprite)
+        sprite.coord = np.min(coords,0)
+        
+            
+    def bar_overlap(self:'Tri', bar:Barrier):
+        """
+        Finds how far along the triangles velocity vector it has travelled into a barrier
+
+        First finds deepest point then projects the velocity vector onto the overlap vector.
+
+        Parameters
+        ----------
+        bar : W_object.Barrier
+            The barrier to check overlap with
+
+        Returns
+        -------
+        overlap : numpy.mat 
+            The maximum overlap in vector form, directed such that a negative overlap implies that the two are not touching yet
+        """
+        
+        ## The deepest point will always be one of the corners
+        max_proj_delta = np.zeros((1,2))
+        for coord in self.coords:
+            delta = coord - bar.coord
+            proj_delta = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(delta)))
+            if max_proj_delta[0,0] < proj_delta[0,0]:
+                max_proj_delta = proj_delta
+
+        ## If the item has velocity, ie could have clipped into the barrier of it's own accord we want to push it out along it's own vector
+        if not self.vel is None:
+            ## Find the velocity expressed in the bar's coordinate system
+            proj_vel = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(self.vel)))
+            proj_vel_hat = proj_vel/np.linalg.norm(proj_vel)
+
+            ## Find the vector giving how far into the barrier the point has travelled, in the bar coordinate system
+            proj_gap = max_proj_delta[0,0]/proj_vel_hat[0,0] * proj_vel_hat
+
+            ## Transform back into global coordinate system
+            overlap = np.matmul(proj_gap, bar.mat)
+        ## If instead we have no velocity, just shove it out the shortest path
+        else:
+            overlap = np.matmul(max_proj_delta, bar.mat)
+
+        return overlap
+
+
+    def bar_collide(self:'Tri', bar:Barrier):
+        """
+        Handles a triangle bar collision
+
+        Parameters
+        ----------
+        bar : W_object.Barrier
+            The barrier to collide with
+            
+        Returns
+        -------
+        - : bool 
+            Wether or not the Tri collided with the Barrier
+        """
+        max_proj_delta = np.zeros((1,2))
+        for coord in self.coords:
+            delta = coord - bar.coord
+            proj_delta = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(delta)))
+            if max_proj_delta[0,0] < proj_delta[0,0]:
+                max_proj_delta = proj_delta
+
+        ## Check if there is an overlap
+        if max_proj_delta[0,0] < 0:
+            ## If the item has velocity, ie could have clipped into the barrier of it's own accord we want to push it out along it's own vector
+            if not self.vel is None:
+                ## Find the velocity expressed in the bar's coordinate system
+                proj_vel = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(self.vel)))
+                proj_vel[0,0] = -proj_vel[0,0]
+
+                self.vel = np.matmul(proj_vel, bar.mat)
+                
+            ## If instead we have no velocity, just shove it out the shortest path
+            else:
+                pass
+            
+            projected_offset = - 2*np.asmatrix([max_proj_delta[0,0],0])
+            for coord in self.coords:
+                coord = coord + np.matmul(projected_offset, bar.mat)
+
+            return True
+        else:
+            return False
+
+    def refresh(self, args):
+        pass
+
 ##########################################################################
 # Collider Class, used in Objects for generic collision detection        #
 ##########################################################################
-
-## Not yet implemented lmaoski ##
