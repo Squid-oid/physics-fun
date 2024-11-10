@@ -262,8 +262,8 @@ class Tri(W_object):
         bounding_box = np.max(coords,0) - np.min(coords,0)
         
         ## Creates an array of overscaled but correct size that we will then scale down(naive way to improve aliasing)
-        sz1 = int(np.rint(bounding_box[0,0]*5))
-        sz2 = int(np.rint(bounding_box[0,1]*5))
+        sz1 = int(np.rint(bounding_box[0,0]*3))
+        sz2 = int(np.rint(bounding_box[0,1]*3))
         arr = np.asmatrix(np.zeros((sz1,sz2)))
 
         # Generates Clockwise coords
@@ -285,9 +285,10 @@ class Tri(W_object):
         orth3 = np.asmatrix([side3[0,1], -side3[0,0]])
 
         ## Now we wish to shade all pixels that are within the triangle, we do this by checking each pixel against the polytope criterion
+        c_const = np.asmatrix([1/2,1/2]).T
         for i in range(0,sz1):
             for j in range(0,sz2):
-                x = np.asmatrix([i,j]).T / 5 #- np.min(coords,0).T
+                x = (np.asmatrix([i,j]).T + c_const) / 3 + np.min(coords,0).T
                 cond1 = all(orth1*x <= orth1*coords[1,:].T)
                 cond2 = all(orth2*x <= orth2*coords[2,:].T)
                 cond3 = all(orth3*x <= orth3*coords[0,:].T)
@@ -302,8 +303,9 @@ class Tri(W_object):
         arr.shape = (sz1,sz2,4)
         upscaled_img = Image.fromarray(arr.astype(np.uint8))
                 
+        im = upscaled_img.resize(size = (sz1,sz2), resample= Image.BILINEAR)
+
         sprite = fact.from_image(upscaled_img)
-        upscaled_img.save('game_engine\\tempsprites\\temp2.png')
         return sprite
 
 
@@ -328,7 +330,7 @@ class Tri(W_object):
         print("Attempting to Generate Sprite")
         sprite = Tri.generateSprite(coords, fact)
         super().__init__(coord = avg_point, vel = vel, sprite = sprite)
-        sprite.coord = np.min(coords,0)
+        self.sprite.position = round(np.min(self.coords,1)[0,0]), round(np.min(self.coords,1)[1,0])
         
             
     def bar_overlap(self:'Tri', bar:Barrier):

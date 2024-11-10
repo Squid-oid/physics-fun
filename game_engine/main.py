@@ -42,7 +42,7 @@ class InitFuncs():
         bndb = W.Barrier(coord=[800,600], fact = factory, angle= 0)
         bndr = W.Barrier(coord=[800,600], fact = factory, angle=np.pi*3/2)
 
-        tri1_coords = np.asmatrix([[0,0],[0,20],[20,0]])
+        tri1_coords = np.asmatrix([[30,30],[40,30],[40,40]])
         tri1 = W.Tri(fact = factory, coords=tri1_coords)
 
         objects.append(tri1)
