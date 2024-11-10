@@ -266,7 +266,15 @@ class Tri(W_object):
         sz2 = int(np.rint(bounding_box[0,1]*5))
         arr = np.asmatrix(np.zeros((sz1,sz2)))
 
-        ## Finds the edges of the triangle (vector form)
+        # Generates Clockwise coords
+        c1 = coords[1,:] - coords[0,:]
+        c2 = coords[2,:] - coords[1,:]
+        cross = c1[0,0]*c2[0,1] - c1[0,1]*c2[0,0]
+        print(cross)
+        if cross > 0:
+            coords = np.flip(coords,1)
+
+        # Generates counterclockwise edges from vertices
         side1 = coords[0,:] - coords[1,:]
         side2 = coords[1,:] - coords[2,:]
         side3 = coords[2,:] - coords[0,:]
