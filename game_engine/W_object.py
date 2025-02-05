@@ -332,7 +332,6 @@ class Tri(W_object):
         super().__init__(coord = avg_point, vel = vel, sprite = sprite)
         self.sprite.position = round(np.min(self.coords,1)[0,0]), round(np.min(self.coords,1)[1,0])
         
-            
     def bar_overlap(self:'Tri', bar:Barrier):
         """
         Finds how far along the triangles velocity vector it has travelled into a barrier
