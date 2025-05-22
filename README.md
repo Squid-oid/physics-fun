@@ -15,10 +15,8 @@ Phase 2 (Good Shapes in Box);
 4. Implement External Forces, starting with gravity, maybe also Internal Value, Coordinate and Velocity dependant forces ie Electromagnetic
 5. Make one of the Shapes Controllable to provide 'player' interaction
 
-Phase 3-K (Basic Game);
-[Too far in the future and too ambitous to break down now, essentialy just create basic platformer using above tools]
 
-Phase K+1 (3d Spheres);
+Phase 3 (3d Spheres);
 [Create 3d spheres in box simulation using what I've Learned]
 
 # Completed
@@ -34,7 +32,7 @@ I am working in VSCode on windows 10 using conda (miniconda3) to manage my envir
 Phase 0 (Balls in Box); COMPLETE
 1. ~~Add proper comments to code already present~~
 2. ~~Reevaluate the necessity of the CVector Vector handling~~ [Removed CVector usage]
-3. ~~Change refresh() actions over to using the TimeFuncs.timestep() function, as well as being tied to the system clock instead of framerate~~ [Sys Clock tied, refresh fixed in World_Objects.Ball which is the only object with proper refresh so far]
+3. ~~Change refresh() actions over to using the TimeFuncs.timestep() function, as well as being tied to the system clock instead of framerate~~
 4. ~~Implement and test bsic ball on ball collision~~
 5. ~~Allow free selection of Ball Size~~
 6. ~~[Maybe] implement refresh() new collision rechecking to allow a Ball object to continue bouncing multiple times in one refresh~~, [Maybe] ~~implement collision based physics ticks rather than frame based ones, ie extrapolate object paths until first collision/(lazily possible collision using event horizon) and do a physics refresh exactly at that point to reduce tick frequency.~~ Second part Unfeasible at this stage
