@@ -4,31 +4,21 @@ A little project to build a physics engine and use it in a small demo game
 # Todo
 
 Phase 1 (Shapes in Box);
-1. [Maybe] Seperate collsion detection and handling from the sprite/initialization classes so that W_Objects have a collider object as a property rather than directly holding the collsions.
-2. Create Rectangle W_object and test it's collision handling.
-3. Replace Rectangle W_object with Conv_poly object
+1. Create Rectangle W_object and test it's collision handling
+2. a) Create a tri object
+|. b) Create a Generic Conv_poly object composed of multiple tris
+4. Replace Rectangle W_object implementation with Conv_poly object backend
 
 Phase 2 (Good Shapes in Box);
-1. If Phase 0 - 6 or Phase 1 - 1 have not been previously completed consider doing them now, additionaly Gauss integrals for better subframe precision?
-2. Implement multiple types of object materials which give different collsion properties (elastic, semi elastic, force killing different weights etc.)
-3. Create Test Suite for all previously created work
-4. Implement External Forces, starting with gravity, maybe also Internal Value, Coordinate and Velocity dependant forces ie Electromagnetic
-5. Make one of the Shapes Controllable to provide 'player' interaction
-
+1. Implement multiple types of object materials which give different collsion properties (elastic, semi elastic, force killing different weights etc.)
+2. Create Test Suite for all previously created work
+3. Implement External Forces, starting with gravity, maybe also Internal Value, Coordinate and Velocity dependant forces ie Electromagnetic
+4. Make one of the Shapes Controllable to provide 'player' interaction
 
 Phase 3 (3d Spheres);
 [Create 3d spheres in box simulation using what I've Learned]
 
 # Completed
-At the present version, (Maybe I'll version number, in which case V.0.9.1) I have around 400 lines of code in python using the pysdl2 library. Of these lines around 150 are from early testing before I started using pysdl2 and was using trtle for graphics output {<3 Turtle graphics my love}. I am using pysdl2 for input/output handling.
-
-The code I have so far creates a small window with boundaries placed at the edges and allows multiple balls of varying weight and radii to bounce around off eachother in fully elastic collisions.
-
-# Notes on the Project workflow
-I am working in VSCode on windows 10 using conda (miniconda3) to manage my environment, and use primarily the VSCode git interface to manage the project with occasional tweaks through the github website :smile:. After having finshed the absolute basics of the code I now want to focus on better Version Control and branching.
-
-# Previous Phases
-
 Phase 0 (Balls in Box); COMPLETE
 1. ~~Add proper comments to code already present~~
 2. ~~Reevaluate the necessity of the CVector Vector handling~~ [Removed CVector usage]
