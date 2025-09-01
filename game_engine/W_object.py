@@ -33,6 +33,9 @@ class W_object():
         self.vel = vel
         self.sprite = sprite
 
+    def collide(self, other):
+        return Collision.collide(self, other)
+
     def refresh(self, args):
         """
         Provides a default implementation of refreshing the object (taking a new timestep)
@@ -111,116 +114,7 @@ class Ball(W_object):
         sprite = fact.from_image(temp_sprites.get_path("temp.png"))
         super().__init__(coord = coord, vel = vel, sprite = sprite)
         sprite.coord = coord - np.asmatrix([radius, radius])
-
-    def bar_overlap(self:'Ball', bar:Barrier):
-        """
-        Finds and returns the greatest overlapping distance between a ball and a barrier then returns it in the standard basis vectors as a vector
-
-        Parameters
-        ----------
-        bar : W_object.Barrier
-            The barrier to check overlap with
-
-        Returns
-        -------
-        overlap : numpy.mat 
-            The maximum overlap in vector form, directed such that a negative overlap implies that the two are not touching yet
-        """
-        delta = self.coord - bar.coord
-        proj_delta = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(delta)))
-        proj_gap = proj_delta - np.asmatrix([self.radius, 0])
-        overlap = np.matmul(proj_gap, bar.mat)
-        return overlap
-    
-    def bar_collide(self:'Ball', bar:Barrier):
-        """
-        Handles a ball bar collision
-
-        Parameters
-        ----------
-        bar : W_object.Barrier
-            The barrier to collide with
-            
-        Returns
-        -------
-        - : bool 
-            Wether or not the Ball collided with the Barrier
-        """
-        delta = self.coord - bar.coord
-        proj_delta = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(delta)))
-        proj_gap = np.asmatrix([proj_delta[0,0] - self.radius, 0])
-        if proj_gap[0,0] <= 0 :
-            proj_vel = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(self.vel)))
-            proj_vel[0,0] = -proj_vel[0,0]
-            self.vel = np.matmul(proj_vel, bar.mat)
-
-            proj_coord = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(self.coord)))
-            proj_coord = proj_coord - 2*proj_gap                    #The minus 2 factor here makes the ball bounce off the wall continuing it's post reflection path
-            self.coord = np.matmul(proj_coord, bar.mat)             #This means that the balls path will progress exactly the same regardless of what frame rate the program runs at
-            return True
-        
-        else:
-            return False
-    
-    def ball_collide(self:'Ball', other:'Ball'):
-        """
-        Handles a ball on ball collision
-
-        Parameters
-        ----------
-        other : W_object.Ball
-            The Ball to collide  with
-            
-        Returns
-        -------
-        - : bool 
-            Wether or not the Ball collided with the Barrier
-        """
-        if other is self:
-            return False
-        else:
-            delta = -self.coord + other.coord
-            dist = np.linalg.norm(delta)
-            overlap = dist - self.radius - other.radius
-            if overlap < 0 : 
-                base_e_1 = delta/dist                           #The normalized basis vector in the direction of the other balls center from this balls center
-                base_e_2 = np.asmatrix([base_e_1[0,1], -base_e_1[0,0]])      #Arbitrary normalized right angle basis vector to e1
-                base = np.concatenate((base_e_1, base_e_2))
-
-                m_a = self.mass #self.mass
-                m_b = other.mass #other.mass
-
-                proj_vel = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(self.vel)))
-                proj_o_vel = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(other.vel)))
-                u_a = proj_vel[0,0]
-                u_b = proj_o_vel[0,0]
-                combo_vel = u_a + u_b
-                elapsed_time = overlap/combo_vel
-
-                coeff_sq = m_a**2 + m_a*m_b
-                coeff_li = -2*m_a**2*u_a - 2*m_a*m_b*u_b
-                coeff_co = m_a**2*u_a**2 + 2*m_a*m_b*u_a*u_b - m_a*m_b*u_a**2
-                
-                roots = np.roots([coeff_sq, coeff_li, coeff_co])
-                v_a = min(roots)
-                v_b =  (-m_a*v_a + m_a*u_a + m_b*u_b)/(m_b)
-
-                proj_vel[0,0] = v_a
-                proj_o_vel[0,0] = v_b
-                
-                other.vel = np.matmul(proj_o_vel, base)
-                self.vel = np.matmul(proj_vel, base)               
-                
-                proj_coord = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(self.coord)))
-                proj_coord = proj_coord - np.asmatrix([u_a*elapsed_time, 0]) + np.asmatrix([v_a*elapsed_time, 0])
-                proj_o_coord = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(other.coord)))
-                proj_o_coord = proj_o_coord - np.asmatrix([u_b*elapsed_time, 0]) + np.asmatrix([v_b*elapsed_time, 0])
-
-                other.coord = np.matmul(proj_o_coord, base)
-                self.coord = np.matmul(proj_coord, base)             #This means that the balls path will progress exactly the same regardless of what frame rate the program runs at 
-                return True
-            return False      
-
+       
     def refresh(self, args):
         """
         Overrides the defualt refresh to create a new one which moves the Ball and checks if it has collided with any barriers
@@ -243,10 +137,10 @@ class Ball(W_object):
         while collided is True :
             collided = False
             for bar in bars:
-                if self.bar_collide(bar):                   #If a collision occurs a recheck happens in case another collision is caused by the first one resolving
+                if self.collide(bar):                   #If a collision occurs a recheck happens in case another collision is caused by the first one resolving
                     collided = True
             for ball in balls:
-                if self.ball_collide(ball):                   #If a collision occurs a recheck happens in case another collision is caused by the first one resolving
+                if self.collide(ball):                   #If a collision occurs a recheck happens in case another collision is caused by the first one resolving
                     collided = False
         
         self.sprite.position = round(self.coord[0,0] - self.radius), round(self.coord[0,1] - self.radius)
@@ -308,7 +202,6 @@ class Tri(W_object):
         sprite = fact.from_image(upscaled_img)
         return sprite
 
-
     def __init__(self, fact:sdl2.ext.SpriteFactory, coords:np.asmatrix = None, vel:np.asmatrix = None, mass:float = 1.00):
         """
         Initializes a new Triangle object at the provided Coordinates with the provided Velocity
@@ -332,95 +225,204 @@ class Tri(W_object):
         super().__init__(coord = avg_point, vel = vel, sprite = sprite)
         self.sprite.position = round(np.min(self.coords,1)[0,0]), round(np.min(self.coords,1)[1,0])
         
-    def bar_overlap(self:'Tri', bar:Barrier):
-        """
-        Finds how far along the triangles velocity vector it has travelled into a barrier
-
-        First finds deepest point then projects the velocity vector onto the overlap vector.
-
-        Parameters
-        ----------
-        bar : W_object.Barrier
-            The barrier to check overlap with
-
-        Returns
-        -------
-        overlap : numpy.mat 
-            The maximum overlap in vector form, directed such that a negative overlap implies that the two are not touching yet
-        """
-        
-        ## The deepest point will always be one of the corners
-        max_proj_delta = np.zeros((1,2))
-        for coord in self.coords:
-            delta = coord - bar.coord
-            proj_delta = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(delta)))
-            if max_proj_delta[0,0] < proj_delta[0,0]:
-                max_proj_delta = proj_delta
-
-        ## If the item has velocity, ie could have clipped into the barrier of it's own accord we want to push it out along it's own vector
-        if not self.vel is None:
-            ## Find the velocity expressed in the bar's coordinate system
-            proj_vel = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(self.vel)))
-            proj_vel_hat = proj_vel/np.linalg.norm(proj_vel)
-
-            ## Find the vector giving how far into the barrier the point has travelled, in the bar coordinate system
-            proj_gap = max_proj_delta[0,0]/proj_vel_hat[0,0] * proj_vel_hat
-
-            ## Transform back into global coordinate system
-            overlap = np.matmul(proj_gap, bar.mat)
-        ## If instead we have no velocity, just shove it out the shortest path
-        else:
-            overlap = np.matmul(max_proj_delta, bar.mat)
-
-        return overlap
-
-
-    def bar_collide(self:'Tri', bar:Barrier):
-        """
-        Handles a triangle bar collision
-
-        Parameters
-        ----------
-        bar : W_object.Barrier
-            The barrier to collide with
-            
-        Returns
-        -------
-        - : bool 
-            Wether or not the Tri collided with the Barrier
-        """
-        max_proj_delta = np.zeros((1,2))
-        for coord in self.coords:
-            delta = coord - bar.coord
-            proj_delta = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(delta)))
-            if max_proj_delta[0,0] < proj_delta[0,0]:
-                max_proj_delta = proj_delta
-
-        ## Check if there is an overlap
-        if max_proj_delta[0,0] < 0:
-            ## If the item has velocity, ie could have clipped into the barrier of it's own accord we want to push it out along it's own vector
-            if not self.vel is None:
-                ## Find the velocity expressed in the bar's coordinate system
-                proj_vel = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(self.vel)))
-                proj_vel[0,0] = -proj_vel[0,0]
-
-                self.vel = np.matmul(proj_vel, bar.mat)
-                
-            ## If instead we have no velocity, just shove it out the shortest path
-            else:
-                pass
-            
-            projected_offset = - 2*np.asmatrix([max_proj_delta[0,0],0])
-            for coord in self.coords:
-                coord = coord + np.matmul(projected_offset, bar.mat)
-
-            return True
-        else:
-            return False
-
     def refresh(self, args):
         pass
 
 ##########################################################################
 # Collider Class, used in Objects for generic collision detection        #
 ##########################################################################
+class Collision:
+    """
+    Static class for handling collision and overlap calculations
+    between world objects like Ball, Barrier, and Tri.
+    """
+
+    @ staticmethod 
+    def collide(obj1:'W_object', obj2:'W_object') -> bool:
+        """
+        Dispatches to the correct collision function depending on types.
+        Returns True if a collision occurred, False otherwise.
+        """
+        from W_object import Ball, Barrier, Tri  
+
+        # Balls and Walls
+        if isinstance(obj1, Ball) and isinstance(obj2, Barrier):
+            return Collision.ball_bar_collide(obj1, obj2)
+        elif isinstance(obj1, Barrier) and isinstance(obj2, Ball):
+            return Collision.ball_bar_collide(obj2, obj1)  # reverse order
+
+        # Balls and Balls
+        elif isinstance(obj1, Ball) and isinstance(obj2, Ball):
+            return Collision.ball_ball_collide(obj1, obj2)
+
+        # Tris and Walls
+        elif isinstance(obj1, Tri) and isinstance(obj2, Barrier):
+            return Collision.tri_bar_collide(obj1, obj2)
+        elif isinstance(obj1, Barrier) and isinstance(obj2, Tri):
+            return Collision.tri_bar_collide(obj2, obj1)
+
+        # Tris and Balls
+        elif isinstance(obj1, Tri) and isinstance(obj2, Ball):
+            return Collision.tri_ball_collide(obj1, obj2)
+        elif isinstance(obj1, Ball) and isinstance(obj2, Tri):
+            return Collision.tri_ball_collide(obj2, obj1)
+
+        # Tris and Tris
+        elif isinstance(obj1, Tri) and isinstance(obj2, Tri):
+            return Collision.tri_tri_collide(obj1, obj2)  
+         
+        return False
+
+
+
+    @staticmethod
+    def ball_bar_overlap(ball:'Ball', bar:'Barrier') -> np.matrix:
+        """
+        Finds and returns the greatest overlapping distance between a ball and a barrier.
+        Negative overlap means not touching yet.
+        """
+        delta = ball.coord - bar.coord
+        proj_delta = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(delta)))
+        proj_gap = proj_delta - np.asmatrix([ball.radius, 0])
+        overlap = np.matmul(proj_gap, bar.mat)
+        return overlap
+
+    @staticmethod
+    def ball_bar_collide(ball:'Ball', bar:'Barrier') -> bool:
+        """
+        Handles a ball-barrier collision.
+        """
+        delta = ball.coord - bar.coord
+        proj_delta = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(delta)))
+        proj_gap = np.asmatrix([proj_delta[0,0] - ball.radius, 0])
+
+        if proj_gap[0,0] <= 0:
+            proj_vel = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(ball.vel)))
+            proj_vel[0,0] = -proj_vel[0,0]
+            ball.vel = np.matmul(proj_vel, bar.mat)
+
+            proj_coord = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(ball.coord)))
+            proj_coord = proj_coord - 2*proj_gap
+            ball.coord = np.matmul(proj_coord, bar.mat)
+            return True
+
+        return False
+
+    @staticmethod
+    def ball_ball_collide(ball:'Ball', other:'Ball') -> bool:
+        """
+        Handles a ball-on-ball collision.
+        """
+        if other is ball:
+            return False
+
+        delta = -ball.coord + other.coord
+        dist = np.linalg.norm(delta)
+        overlap = dist - ball.radius - other.radius
+
+        if overlap < 0:
+            base_e_1 = delta/dist
+            base_e_2 = np.asmatrix([base_e_1[0,1], -base_e_1[0,0]])
+            base = np.concatenate((base_e_1, base_e_2))
+
+            m_a, m_b = ball.mass, other.mass
+
+            proj_vel = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(ball.vel)))
+            proj_o_vel = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(other.vel)))
+            u_a, u_b = proj_vel[0,0], proj_o_vel[0,0]
+            combo_vel = u_a + u_b
+            elapsed_time = overlap/combo_vel
+
+            coeff_sq = m_a**2 + m_a*m_b
+            coeff_li = -2*m_a**2*u_a - 2*m_a*m_b*u_b
+            coeff_co = m_a**2*u_a**2 + 2*m_a*m_b*u_a*u_b - m_a*m_b*u_a**2
+
+            roots = np.roots([coeff_sq, coeff_li, coeff_co])
+            v_a = min(roots)
+            v_b = (-m_a*v_a + m_a*u_a + m_b*u_b)/(m_b)
+
+            proj_vel[0,0] = v_a
+            proj_o_vel[0,0] = v_b
+
+            other.vel = np.matmul(proj_o_vel, base)
+            ball.vel = np.matmul(proj_vel, base)
+
+            proj_coord = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(ball.coord)))
+            proj_coord = proj_coord - np.asmatrix([u_a*elapsed_time, 0]) + np.asmatrix([v_a*elapsed_time, 0])
+            proj_o_coord = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(other.coord)))
+            proj_o_coord = proj_o_coord - np.asmatrix([u_b*elapsed_time, 0]) + np.asmatrix([v_b*elapsed_time, 0])
+
+            other.coord = np.matmul(proj_o_coord, base)
+            ball.coord = np.matmul(proj_coord, base)
+            return True
+
+        return False
+
+    @staticmethod
+    def tri_bar_overlap(tri:'Tri', bar:'Barrier') -> np.matrix:
+        """
+        Finds how far along the triangle’s velocity vector it has travelled into a barrier.
+        """
+        max_proj_delta = np.zeros((1,2))
+        for coord in tri.coords:
+            delta = coord - bar.coord
+            proj_delta = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(delta)))
+            if max_proj_delta[0,0] < proj_delta[0,0]:
+                max_proj_delta = proj_delta
+
+        if not tri.vel is None:
+            proj_vel = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(tri.vel)))
+            proj_vel_hat = proj_vel / np.linalg.norm(proj_vel)
+            proj_gap = max_proj_delta[0,0]/proj_vel_hat[0,0] * proj_vel_hat
+            overlap = np.matmul(proj_gap, bar.mat)
+        else:
+            overlap = np.matmul(max_proj_delta, bar.mat)
+
+        return overlap
+
+    @staticmethod
+    def tri_bar_collide(tri:'Tri', bar:'Barrier') -> bool:
+        """
+        Handles a triangle-barrier collision.
+        """
+        max_proj_delta = np.zeros((1,2))
+        for coord in tri.coords:
+            delta = coord - bar.coord
+            proj_delta = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(delta)))
+            if max_proj_delta[0,0] < proj_delta[0,0]:
+                max_proj_delta = proj_delta
+
+        if max_proj_delta[0,0] < 0:
+            if not tri.vel is None:
+                proj_vel = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(tri.vel)))
+                proj_vel[0,0] = -proj_vel[0,0]
+                tri.vel = np.matmul(proj_vel, bar.mat)
+
+            projected_offset = -2*np.asmatrix([max_proj_delta[0,0], 0])
+            for coord in tri.coords:
+                coord = coord + np.matmul(projected_offset, bar.mat)
+
+            return True
+
+        return False
+    
+    @staticmethod
+    def tri_ball_collide(tri:'Tri', ball:'Ball') -> bool:
+        """
+        Placeholder for triangle–ball collision.
+        Currently unimplemented.
+        """
+        print("Tri–Ball collision not implemented yet.")
+        return False
+
+    # -------------------
+    # Tri–Tri (placeholder)
+    # -------------------
+    @staticmethod
+    def tri_tri_collide(tri1:'Tri', tri2:'Tri') -> bool:
+        """
+        Placeholder for triangle–triangle collision.
+        Currently unimplemented.
+        """
+        print("Tri–Tri collision not implemented yet.")
+        return False

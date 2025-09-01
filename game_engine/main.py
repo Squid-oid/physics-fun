@@ -6,7 +6,7 @@ import numpy as np
 import Timestep as ts
 import time as time
 
-#################################################################
+#################################################################ch
 # Mini Classes ##################################################
 
 class SoftwareRenderer(sdl2.ext.SoftwareSpriteRenderSystem):
@@ -43,7 +43,7 @@ class InitFuncs():
         bndr = W.Barrier(coord=[800,600], fact = factory, angle=np.pi*3/2)
 
         tri1_coords = np.asmatrix([[30,30],[40,30],[40,40]])
-        tri1 = W.Tri(fact = factory, coords=tri1_coords)
+        tri1 = W.Tri(fact = factory, coords=tri1_coords, vel = [10,10])
 
         objects.append(tri1)
 
