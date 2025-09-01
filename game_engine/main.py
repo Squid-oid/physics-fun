@@ -28,35 +28,32 @@ class InitFuncs():
     def create_objects(factory):
      
         objects = []
-        barriers = []
-        balls = []
 
-        #bll = W.Ball(fact = factory, coord=[51,51], vel=[60,0], radius=50, mass = 100)        #Velocity in pixels per second
-        #bll2 = W.Ball(fact = factory,coord=[50,32], vel=[-60,40])        #Velocity in pixels per second
-        #bll3 = W.Ball(fact = factory , coord=[700,51], vel=[-600,0])        #Velocity in pixels per second
-        #bll4 = W.Ball(fact = factory, coord=[300,50], vel=[-300,0])        #Velocity in pixels per second
-        #bll5 = W.Ball(fact = factory, coord=[58,38], vel=[-60,400])        #Velocity in pixels per second
+        bll = W.Ball(fact = factory, coord=[101,151], vel=[50,0], radius=50, mass = 100)        #Velocity in pixels per second
+        bll2 = W.Ball(fact = factory , coord=[700,51], vel=[-250,0])        #Velocity in pixels per second
+        bll3 = W.Ball(fact = factory, coord=[300,50], vel=[-120,0])        #Velocity in pixels per second
+        objects.append(bll)
+        objects.append(bll2)
+        objects.append(bll3)
 
         bndt = W.Barrier(coord = [0,0], fact = factory, angle=np.pi)
         bndl = W.Barrier(coord=[0,0], fact = factory, angle=np.pi*1/2)
         bndb = W.Barrier(coord=[800,600], fact = factory, angle= 0)
         bndr = W.Barrier(coord=[800,600], fact = factory, angle=np.pi*3/2)
-
-        tri1_coords = 600 + np.asmatrix([[5,0],[0,10],[10,10]])
-        tri1 = W.Tri(fact = factory, coords=tri1_coords, vel = [10,10])
-
-        objects.append(tri1)
-
         objects.append(bndt)
         objects.append(bndl)
         objects.append(bndb)
         objects.append(bndr)
 
-        #objects.append(bll)
-        #objects.append(bll2)
-        #objects.append(bll3)
-        #objects.append(bll4)
-        #objects.append(bll5)
+        tri1_coords = 500 + np.asmatrix([[5,0],[0,10],[10,10]])
+        tri1 = W.Tri(fact = factory, coords=tri1_coords, vel = [10,10])
+        tri2_coords = 250 + np.asmatrix([[5,0],[0,10],[10,10]])
+        tri2 = W.Tri(fact = factory, coords=tri2_coords, vel = [10,10])
+        tri3_coords = np.asmatrix([[0,0],[0,20],[20,20]])
+        tri3 = W.Tri(fact = factory, coords=tri3_coords, vel = [20,5])
+        objects.append(tri1)
+        objects.append(tri2)
+        objects.append(tri3)
 
         return objects
 

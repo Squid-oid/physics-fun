@@ -58,10 +58,12 @@ class W_object():
             self.coords = self.coord + self.offsets # Update Coords to match center
 
         collided = True
-        while collided is True :
+        while collided is True:
             collided = False
             for obj in objs:
-                if self.collide(obj):                   #If a collision occurs a recheck happens in case another collision is caused by the first one resolving
+                if obj is self:
+                    continue
+                elif self.collide(obj):                   #If a collision occurs a recheck happens in case another collision is caused by the first one resolving
                     collided = True
 
 
@@ -171,7 +173,7 @@ class Tri(W_object):
         c1 = coords[1,:] - coords[0,:]
         c2 = coords[2,:] - coords[1,:]
         cross = c1[0,0]*c2[0,1] - c1[0,1]*c2[0,0]
-        print(cross)
+
         if cross > 0:
             coords = np.flip(coords,0)
 
@@ -261,6 +263,7 @@ class Collision:
     Static class for handling collision and overlap calculations
     between world objects like Ball, Barrier, and Tri.
     """
+    eps = 1e-1
 
     @ staticmethod 
     def collide(obj1:'W_object', obj2:'W_object') -> bool:
@@ -377,8 +380,8 @@ class Collision:
             proj_o_coord = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(other.coord)))
             proj_o_coord = proj_o_coord - np.asmatrix([u_b*elapsed_time, 0]) + np.asmatrix([v_b*elapsed_time, 0])
 
-            other.coord = np.matmul(proj_o_coord, base)
-            ball.coord = np.matmul(proj_coord, base)
+            other.coord = np.matmul(proj_o_coord, base) + base_e_1*Collision.eps
+            ball.coord = np.matmul(proj_coord, base) - base_e_1*Collision.eps
             return True
 
         return False
@@ -412,8 +415,6 @@ class Collision:
             correction = -(max_penetration - eps)* bar_normal  # positive vector, we add a tiny offset since this collision is prone to getting stuck
             tri.coords = tri.coords + correction
             tri.coord = tri.coord + correction
-            print("Correction applied:", correction)  # DEBUG
-            print("New triangle coords:\n", tri.coords)  # DEBUG
 
             return True
 
@@ -422,7 +423,7 @@ class Collision:
     @staticmethod
     def tri_ball_collide(tri:'Tri', ball:'Ball') -> bool:
         """
-        Handles a Triange Ball Collision
+        Handles triangle-ball collision with velocity reflection for both.
         """
         # Find closest triangle vertex to ball center
         closest_point = None
@@ -434,32 +435,96 @@ class Collision:
                 min_dist = dist
                 closest_point = pt
 
-        # Check if ball overlaps with the point
+        # Check for collision
         if min_dist < ball.radius:
-            #  Compute normal vector from point to ball
-            normal = ball.coord - closest_point
-            normal_hat = normal / np.linalg.norm(normal)
+            # Normal from triangle to ball
+            if min_dist == 0:
+                normal_hat = np.asmatrix([1.0, 0.0])
+            else:
+                normal_hat = (ball.coord - closest_point) / min_dist
 
-            #  Reflect ball velocity along normal
-            v_dot_n = np.dot(ball.vel, normal_hat.T)[0,0]  # scalar projection
-            ball.vel = ball.vel - 2*v_dot_n*normal_hat
-
-            # Push ball out of triangle along normal
+            # Penetration depth
             penetration = ball.radius - min_dist
-            ball.coord = ball.coord + normal_hat * penetration
+            total_mass = ball.mass + tri.mass
+
+            # Move both objects out of collision proportionally to mass
+            ball.coord += normal_hat * ((penetration * (tri.mass / total_mass)) - Collision.eps)
+            tri.coords -= normal_hat * ((penetration * (ball.mass / total_mass)) + Collision.eps)
+            tri.coord = np.mean(tri.coords, axis=0)
+
+            # Relative velocity along normal
+            v_rel = ball.vel - tri.vel
+            v_along_normal = float(v_rel @ normal_hat.T)
+            if v_along_normal > 0:
+                return True  # moving apart already
+
+            # 1D elastic collision along normal
+            u_ball = float(ball.vel @ normal_hat.T)
+            u_tri = float(tri.vel @ normal_hat.T)
+            m1, m2 = ball.mass, tri.mass
+
+            v_ball = (u_ball*(m1 - m2) + 2*m2*u_tri) / (m1 + m2)
+            v_tri  = (u_tri*(m2 - m1) + 2*m1*u_ball) / (m1 + m2)
+
+            ball.vel += (v_ball - u_ball) * normal_hat
+            tri.vel  += (v_tri - u_tri) * normal_hat
 
             return True
 
         return False
 
-    # -------------------
-    # Tri–Tri (placeholder)
-    # -------------------
     @staticmethod
     def tri_tri_collide(tri1:'Tri', tri2:'Tri') -> bool:
         """
-        Placeholder for triangle–triangle collision.
-        Currently unimplemented.
+        Checks triangle-triangle collision using SAT
+        Separates overlapping triangles and reflects velocities along minimum translation axis.
         """
-        #print("Tri–Tri collision not implemented yet.")
-        return False
+        def get_axes(tri):
+            edges = [tri[1,:]-tri[0,:], tri[2,:]-tri[1,:], tri[0,:]-tri[2,:]]
+            axes = [np.asmatrix([e[0,1], -e[0,0]]) for e in edges]
+            axes = [a / np.linalg.norm(a) for a in axes]
+            return axes
+
+        def project(tri, axis):
+            return np.min(tri @ axis.T), np.max(tri @ axis.T)
+
+        tri1_coords = tri1.coords
+        tri2_coords = tri2.coords
+
+        axes = get_axes(tri1_coords) + get_axes(tri2_coords)
+        mtv_overlap = float('inf')
+        mtv_axis = None
+
+        for axis in axes:
+            min1, max1 = project(tri1_coords, axis)
+            min2, max2 = project(tri2_coords, axis)
+
+            overlap = min(max1, max2) - max(min1, min2)
+            if overlap <= 0:
+                return False  # Separating axis found, no collision
+
+            if overlap < mtv_overlap:
+                mtv_overlap = overlap
+                mtv_axis = axis
+
+        # Apply a small epsilon to avoid sticking
+        mtv_overlap = max(mtv_overlap, Collision.eps)
+
+        # Separate triangles along MTV
+        correction = mtv_axis * (mtv_overlap / 2)
+        tri1.coords = tri1.coords + correction
+        tri2.coords = tri2.coords - correction
+
+        # Update triangle centers
+        tri1.coord = np.mean(tri1.coords, axis=0)
+        tri2.coord = np.mean(tri2.coords, axis=0)
+
+        # Reflect velocities along MTV axis
+        if tri1.vel is not None:
+            v_dot = float(tri1.vel @ mtv_axis.T)
+            tri1.vel = tri1.vel - 2 * v_dot * mtv_axis
+        if tri2.vel is not None:
+            v_dot = float(tri2.vel @ mtv_axis.T)
+            tri2.vel = tri2.vel - 2 * v_dot * mtv_axis
+
+        return True
