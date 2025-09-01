@@ -43,9 +43,27 @@ class W_object():
         Parameters
         ----------
         args : List
-            A list of args, should usually be empty when the default refresh is used
+            A list of args, includes the world stepper and a list of all world objects
         """
-        pass
+        stepper = cast(ts.Time_Funcs, args['stepper'])
+        objs = args['objs']
+
+        state = np.transpose(np.concatenate((self.coord, self.vel), axis = 1))
+        f_mat = np.zeros([4,4])
+        f_mat[0:2,2:4] = np.identity(2)
+        state = np.transpose(stepper.time_step(f  = f_mat, u = state))
+        [self.coord, self.vel] = np.split(state,[2], axis = 1)
+
+        if isinstance(self, Tri):
+            self.coords = self.coord + self.offsets # Update Coords to match center
+
+        collided = True
+        while collided is True :
+            collided = False
+            for obj in objs:
+                if self.collide(obj):                   #If a collision occurs a recheck happens in case another collision is caused by the first one resolving
+                    collided = True
+
 
 class Barrier(W_object):
     """
@@ -83,6 +101,11 @@ class Barrier(W_object):
             sprite.position = -10000,-10000
         self.mat = np.asmatrix([directed_normal,directed_tangent])
         super().__init__(coord = coord, vel = vel, sprite = sprite)
+
+    
+    def refresh(self, args):
+        """ Since we know that barriers/half planes never move, we can leave refreshing and colliding to Tris and Balls """
+        pass
             
 class Ball(W_object):
     """
@@ -117,32 +140,16 @@ class Ball(W_object):
        
     def refresh(self, args):
         """
-        Overrides the defualt refresh to create a new one which moves the Ball and checks if it has collided with any barriers
+        Overrides the defualt refresh to create a new one which moves the BallSprite
 
         Parameters
         ----------
-        args : List of Dictionaries
-            A list, if passed correctly it should contain a dictionary with an entry keyed "barriers" containing a list of Barriers  
+        args : Dcit
+            A dict, if passed correctly it should contain a list of all objects under the key 'objs' and a stepper under the key 'stepper'
         """
-        stepper = cast(ts.Time_Funcs, args['stepper'])
-        state = np.transpose(np.concatenate((self.coord, self.vel), axis = 1))
-        f_mat = np.zeros([4,4])
-        f_mat[0:2,2:4] = np.identity(2)
-        state = np.transpose(stepper.time_step(f  = f_mat, u = state))
-        [self.coord, self.vel] = np.split(state,[2], axis = 1)
-        bars = args["barriers"]
-        balls = args["balls"]
-
-        collided = True
-        while collided is True :
-            collided = False
-            for bar in bars:
-                if self.collide(bar):                   #If a collision occurs a recheck happens in case another collision is caused by the first one resolving
-                    collided = True
-            for ball in balls:
-                if self.collide(ball):                   #If a collision occurs a recheck happens in case another collision is caused by the first one resolving
-                    collided = False
-        
+        # Run Update
+        super().refresh(args)        
+        # Update the sprite
         self.sprite.position = round(self.coord[0,0] - self.radius), round(self.coord[0,1] - self.radius)
 
 
@@ -166,7 +173,7 @@ class Tri(W_object):
         cross = c1[0,0]*c2[0,1] - c1[0,1]*c2[0,0]
         print(cross)
         if cross > 0:
-            coords = np.flip(coords,1)
+            coords = np.flip(coords,0)
 
         # Generates counterclockwise edges from vertices
         side1 = coords[0,:] - coords[1,:]
@@ -190,16 +197,18 @@ class Tri(W_object):
                 if all([cond1,cond2,cond3]):
                     arr[i,j] = 255
 
+        # Transpose the array to get it to y,x format for image
+        arr = arr.T
+
         ## Now we use the array together with pysdl to create a sprite
-        arr = np.flip(arr,0)
         arr = arr.reshape(sz1*sz2)
         arr = np.pad(arr.T, ((0,0),(3,0)))
         arr.shape = (sz1,sz2,4)
         upscaled_img = Image.fromarray(arr.astype(np.uint8))
                 
-        im = upscaled_img.resize(size = (sz1,sz2), resample= Image.BILINEAR)
+        im = upscaled_img.resize(size = (bounding_box[0,0], bounding_box[0,1]), resample= Image.BILINEAR)
 
-        sprite = fact.from_image(upscaled_img)
+        sprite = fact.from_image(im)
         return sprite
 
     def __init__(self, fact:sdl2.ext.SpriteFactory, coords:np.asmatrix = None, vel:np.asmatrix = None, mass:float = 1.00):
@@ -218,14 +227,30 @@ class Tri(W_object):
 
         self.mass = mass
 
+        # Find 'center' of triangle
         avg_point = np.ones((1,3)) @ self.coords / 3
+        # Find mapping from center to vertices
+        self.offsets = self.coords - avg_point
 
         print("Attempting to Generate Sprite")
         sprite = Tri.generateSprite(coords, fact)
         super().__init__(coord = avg_point, vel = vel, sprite = sprite)
-        self.sprite.position = round(np.min(self.coords,1)[0,0]), round(np.min(self.coords,1)[1,0])
+        self.sprite_offset = [-avg_point[0,0] + np.min(self.coords[0,:]) , -avg_point[0,1] + np.min(self.coords[1,:])]
+        self.sprite.position = round(self.coord[0,0] + self.sprite_offset[0]) , round(self.coord[0,1] + self.sprite_offset[1])
         
     def refresh(self, args):
+        """
+        Overrides the default refresh to create a new one which moves the TriSprite
+
+        Parameters
+        ----------
+        args : Dcit
+            A dict, if passed correctly it should contain a list of all objects under the key 'objs' and a stepper under the key 'stepper'
+        """
+        # Update pos and collide
+        super().refresh(args)
+        # Move Sprite
+        self.sprite.position = round(self.coord[0,0] + self.sprite_offset[0]) , round(self.coord[0,1] + self.sprite_offset[1])
         pass
 
 ##########################################################################
@@ -359,48 +384,36 @@ class Collision:
         return False
 
     @staticmethod
-    def tri_bar_overlap(tri:'Tri', bar:'Barrier') -> np.matrix:
-        """
-        Finds how far along the triangle’s velocity vector it has travelled into a barrier.
-        """
-        max_proj_delta = np.zeros((1,2))
-        for coord in tri.coords:
-            delta = coord - bar.coord
-            proj_delta = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(delta)))
-            if max_proj_delta[0,0] < proj_delta[0,0]:
-                max_proj_delta = proj_delta
-
-        if not tri.vel is None:
-            proj_vel = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(tri.vel)))
-            proj_vel_hat = proj_vel / np.linalg.norm(proj_vel)
-            proj_gap = max_proj_delta[0,0]/proj_vel_hat[0,0] * proj_vel_hat
-            overlap = np.matmul(proj_gap, bar.mat)
-        else:
-            overlap = np.matmul(max_proj_delta, bar.mat)
-
-        return overlap
-
-    @staticmethod
     def tri_bar_collide(tri:'Tri', bar:'Barrier') -> bool:
         """
         Handles a triangle-barrier collision.
+        Checks all vertices and resolves penetration along the barrier normal.
+        Reflects velocity along the barrier normal.
         """
-        max_proj_delta = np.zeros((1,2))
-        for coord in tri.coords:
-            delta = coord - bar.coord
-            proj_delta = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(delta)))
-            if max_proj_delta[0,0] < proj_delta[0,0]:
-                max_proj_delta = proj_delta
+        eps = 1e-6
 
-        if max_proj_delta[0,0] < 0:
-            if not tri.vel is None:
-                proj_vel = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(tri.vel)))
-                proj_vel[0,0] = -proj_vel[0,0]
-                tri.vel = np.matmul(proj_vel, bar.mat)
+        # Barrier normal (first row of bar.mat)
+        bar_normal = np.asmatrix(bar.mat[0,:]) 
 
-            projected_offset = -2*np.asmatrix([max_proj_delta[0,0], 0])
-            for coord in tri.coords:
-                coord = coord + np.matmul(projected_offset, bar.mat)
+        # Project all triangle vertices onto barrier normal
+        deltas = tri.coords - bar.coord  
+        projections = deltas @ bar_normal.T 
+
+        # Find the deepest penetration (most negative projection)
+        max_penetration = np.min(projections)
+
+        if max_penetration < 0:  # collision occurred
+            if tri.vel is not None:
+                # Reflect velocity along the barrier normal
+                v_dot_n = float(tri.vel @ bar_normal.T)
+                tri.vel = tri.vel - 2 * v_dot_n * bar_normal
+
+            # Move the triangle out along the barrier normal
+            correction = -(max_penetration - eps)* bar_normal  # positive vector, we add a tiny offset since this collision is prone to getting stuck
+            tri.coords = tri.coords + correction
+            tri.coord = tri.coord + correction
+            print("Correction applied:", correction)  # DEBUG
+            print("New triangle coords:\n", tri.coords)  # DEBUG
 
             return True
 
@@ -409,10 +422,34 @@ class Collision:
     @staticmethod
     def tri_ball_collide(tri:'Tri', ball:'Ball') -> bool:
         """
-        Placeholder for triangle–ball collision.
-        Currently unimplemented.
+        Handles a Triange Ball Collision
         """
-        print("Tri–Ball collision not implemented yet.")
+        # Find closest triangle vertex to ball center
+        closest_point = None
+        min_dist = float('inf')
+        for pt in tri.coords:
+            delta = ball.coord - pt
+            dist = np.linalg.norm(delta)
+            if dist < min_dist:
+                min_dist = dist
+                closest_point = pt
+
+        # Check if ball overlaps with the point
+        if min_dist < ball.radius:
+            #  Compute normal vector from point to ball
+            normal = ball.coord - closest_point
+            normal_hat = normal / np.linalg.norm(normal)
+
+            #  Reflect ball velocity along normal
+            v_dot_n = np.dot(ball.vel, normal_hat.T)[0,0]  # scalar projection
+            ball.vel = ball.vel - 2*v_dot_n*normal_hat
+
+            # Push ball out of triangle along normal
+            penetration = ball.radius - min_dist
+            ball.coord = ball.coord + normal_hat * penetration
+
+            return True
+
         return False
 
     # -------------------
@@ -424,5 +461,5 @@ class Collision:
         Placeholder for triangle–triangle collision.
         Currently unimplemented.
         """
-        print("Tri–Tri collision not implemented yet.")
+        #print("Tri–Tri collision not implemented yet.")
         return False

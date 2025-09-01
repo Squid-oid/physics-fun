@@ -31,18 +31,18 @@ class InitFuncs():
         barriers = []
         balls = []
 
-        bll = W.Ball(fact = factory, coord=[51,51], vel=[60,0], radius=50, mass = 100)        #Velocity in pixels per second
-        bll2 = W.Ball(fact = factory,coord=[50,32], vel=[-60,40])        #Velocity in pixels per second
-        bll3 = W.Ball(fact = factory , coord=[700,51], vel=[-600,0])        #Velocity in pixels per second
-        bll4 = W.Ball(fact = factory, coord=[300,50], vel=[-300,0])        #Velocity in pixels per second
-        bll5 = W.Ball(fact = factory, coord=[58,38], vel=[-60,400])        #Velocity in pixels per second
+        #bll = W.Ball(fact = factory, coord=[51,51], vel=[60,0], radius=50, mass = 100)        #Velocity in pixels per second
+        #bll2 = W.Ball(fact = factory,coord=[50,32], vel=[-60,40])        #Velocity in pixels per second
+        #bll3 = W.Ball(fact = factory , coord=[700,51], vel=[-600,0])        #Velocity in pixels per second
+        #bll4 = W.Ball(fact = factory, coord=[300,50], vel=[-300,0])        #Velocity in pixels per second
+        #bll5 = W.Ball(fact = factory, coord=[58,38], vel=[-60,400])        #Velocity in pixels per second
 
         bndt = W.Barrier(coord = [0,0], fact = factory, angle=np.pi)
         bndl = W.Barrier(coord=[0,0], fact = factory, angle=np.pi*1/2)
         bndb = W.Barrier(coord=[800,600], fact = factory, angle= 0)
         bndr = W.Barrier(coord=[800,600], fact = factory, angle=np.pi*3/2)
 
-        tri1_coords = np.asmatrix([[30,30],[40,30],[40,40]])
+        tri1_coords = 600 + np.asmatrix([[5,0],[0,10],[10,10]])
         tri1 = W.Tri(fact = factory, coords=tri1_coords, vel = [10,10])
 
         objects.append(tri1)
@@ -52,24 +52,13 @@ class InitFuncs():
         objects.append(bndb)
         objects.append(bndr)
 
-        objects.append(bll)
-        objects.append(bll2)
-        objects.append(bll3)
-        objects.append(bll4)
-        objects.append(bll5)
+        #objects.append(bll)
+        #objects.append(bll2)
+        #objects.append(bll3)
+        #objects.append(bll4)
+        #objects.append(bll5)
 
-        balls.append(bll)
-        balls.append(bll2)
-        balls.append(bll3)
-        balls.append(bll4)
-        balls.append(bll5)
-
-        barriers.append(bndt)
-        barriers.append(bndl)
-        barriers.append(bndb)
-        barriers.append(bndr)
-
-        return [objects, balls, barriers]
+        return objects
 
 #######################################################
 # Code begins #########################################
@@ -89,17 +78,17 @@ factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
 RESOURCES = sdl2.ext.Resources(__file__, "basesprites")
 bckg = factory.from_color(color=[255,255,255], size=[5000,5000])
 
-[objects, balls, barriers] = InitFuncs.create_objects(factory)
+objects = InitFuncs.create_objects(factory)
 r_objects = []
 for object in objects: 
     r_objects.append(r_object(world, object))
 stepper = ts.Time_Funcs(t = time.time())
 
 refresh_args = {
-    W.Ball: {'barriers': barriers, 'stepper' : stepper, 'balls' : balls},
-    W.Barrier: {},
-    W.W_object: {},
-    W.Tri: {}
+    W.Ball: {'stepper' : stepper, 'objs' : objects},
+    W.Barrier: {}, # The barrier doesn't need args
+    W.W_object: {'stepper' : stepper, 'objs' : objects},
+    W.Tri: {'stepper' : stepper, 'objs' : objects}
 }
 
 
