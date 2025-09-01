@@ -1,1 +1,0 @@
-The folders and files in this folder are code that got scrapped or deemed unnesecary but that I still might want acsess to to double check previous solutions or in case I might want to bring the code back into the fold at a later time
