@@ -4,18 +4,15 @@ A little project to build and visualize a physics engine
 # Todo
 
 Phase 1 (Shapes in Box);
-1. Create Rectangle W_object and test it's collision handling
-2. a) Create a tri object
+1. a) Create a tri object
 |. b) Create a Generic Conv_poly object composed of multiple tris
-4. Replace Rectangle W_object implementation with Conv_poly object backend
 
 Phase 2 (Good Shapes in Box);
-1. Implement multiple types of object materials which give different collsion properties (elastic, semi elastic, force killing different weights etc.)
-2. Create Test Suite for all previously created work
-3. Implement External Forces, starting with gravity, maybe also Internal Value, Coordinate and Velocity dependant forces ie Electromagnetic
-4. Make one of the Shapes Controllable to provide 'player' interaction
+1. Implement elasticity slider to decide force loss on collsion
+2. Implement External Forces, starting with gravity
+3. Make one of the Shapes Controllable to provide 'player' interaction
 
-Phase 3 (3d Spheres);
+Phase 3 (3d Spheres), (maybe);
 [Create 3d spheres in box simulation using what I've Learned]
 
 # Completed
