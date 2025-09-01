@@ -1,10 +1,12 @@
 # physics-fun
 A little project to build and visualize a physics engine
 
+![Visual Example](demo.gif)
+
 # Todo
 
 Phase 1 (Shapes in Box);
-1. a) Create a tri object
+1. a) ~~Create a tri object~~
 |. b) Create a Generic Conv_poly object composed of multiple tris
 
 Phase 2 (Good Shapes in Box);
