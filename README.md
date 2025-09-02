@@ -1,18 +1,14 @@
 # physics-fun
-A little project to build and visualize a physics engine
+A little project to build and visualize a physics engine. This project is mostly from 2023, when I was taking some courses in basic numeric methods, and wanted to try to learn some skills that would be useful for gamedev.
 
 ![Visual Example](demo.gif)
 
+
 # Todo
-
-Phase 1 (Shapes in Box);
-1. a) ~~Create a tri object~~
-|. b) Create a Generic Conv_poly object composed of multiple tris
-
 Phase 2 (Good Shapes in Box);
-1. Implement elasticity slider to decide force loss on collsion
-2. Implement External Forces, starting with gravity
-3. Make one of the Shapes Controllable to provide 'player' interaction
+1. ~~Implement elasticity slider to decide force loss on collsion~~
+2. ~~Implement External Forces, starting with gravity~~
+3. Make one of the Shapes Controllable to provide 'player' interaction (For later)
 
 Phase 3 (3d Spheres), (maybe);
 [Create 3d spheres in box simulation using what I've Learned]
@@ -29,3 +25,14 @@ Phase 0 (Balls in Box); COMPLETE
 8. ~~Fix physics bug (Likely in collision)~~        RESOLVED - Double counting of certain offsets was issue
 9. ~~Work on gfx bugs~~
 10. ~~Different weights~~
+
+Phase 1 (Shapes in Box);
+1. ~~Create a tri object~~
+
+# Skills demonstrated or developed
++ Python Programming
++ Familairity with numpy / computer matrix math
++ State Space Modelling
++ Implicit/Explicit Discretization techniques (Though in the end setteled on Newton for simplicity)
++ Convex geometry and applications
++ Real time visualizastion powered by SDL2
