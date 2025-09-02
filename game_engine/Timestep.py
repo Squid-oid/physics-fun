@@ -50,7 +50,7 @@ class Time_Funcs:
     def time_step(self, f:np.matrix, u:np.matrix, h:float = None):
         """
         Takes a time step forward using the framework u_y+1 = u_y + du/dt_y+1
-        f is a matrix such that fu gives du\dt so u_y+1 = u_y
+        f is a matrix such that fu gives du\dt so u_y+1 = u_y + fu_y
         
         Parameters
         ----------
@@ -67,5 +67,5 @@ class Time_Funcs:
         if h is None: h = self.h
         f = np.asmatrix(f)
         u = np.asmatrix(u)
-        unew = np.linalg.solve(np.eye(f.shape[0]) - self.h*f, u)
+        unew = u + f*u*h # Go back to newtons for now
         return unew

@@ -12,6 +12,11 @@ class W_object():
     """
     Superclass for all game/physics objects handles coordinate, velocity and sprite storage by default
     """
+
+    # Gravity Storage
+    gravity = False
+
+    # Code begins
     def __init__(self, coord:np.matrix = None, vel:np.matrix = None, sprite:sdl2.ext.sprite = None):
         """
         Initializes a new W_object object at the coordinates, velocity and sprite provided
@@ -48,11 +53,15 @@ class W_object():
         stepper = cast(ts.Time_Funcs, args['stepper'])
         objs = args['objs']
 
-        state = np.transpose(np.concatenate((self.coord, self.vel), axis = 1))
-        f_mat = np.zeros([4,4])
-        f_mat[0:2,2:4] = np.identity(2)
+        state = np.transpose(np.concatenate((self.coord, self.vel, np.asmatrix(1)), axis = 1))
+        f_mat = np.zeros([5,5])
+        f_mat[0:2,2:4] = np.identity(2) # The location changes by the velocity
+
+        if W_object.gravity:
+            f_mat[3,4] = 100
+
         state = np.transpose(stepper.time_step(f  = f_mat, u = state))
-        [self.coord, self.vel] = np.split(state,[2], axis = 1)
+        [self.coord, self.vel, _] = np.split(state,[2,4], axis = 1)
 
         if isinstance(self, Tri):
             self.coords = self.coord + self.offsets # Update Coords to match center
@@ -64,9 +73,13 @@ class W_object():
                 if obj is self:
                     continue
                 elif self.collide(obj):                   #If a collision occurs a recheck happens in case another collision is caused by the first one resolving
-                    collided = True
+                    collided = False # True, skipping recollide checks since they seem to be causing more bugs than they're worth
 
+    @staticmethod
+    def setGravity(state):
+        W_object.gravity = state
 
+        
 class Barrier(W_object):
     """
     A W_object subclass that implements Barriers which collide with everything behind them
@@ -167,17 +180,20 @@ class Tri(W_object):
         ## Creates an array of overscaled but correct size that we will then scale down(naive way to improve aliasing)
         sz1 = int(np.rint(bounding_box[0,0]*3))
         sz2 = int(np.rint(bounding_box[0,1]*3))
-        arr = np.asmatrix(np.zeros((sz1,sz2)))
 
         # Generates Clockwise coords
         c1 = coords[1,:] - coords[0,:]
         c2 = coords[2,:] - coords[1,:]
         cross = c1[0,0]*c2[0,1] - c1[0,1]*c2[0,0]
-
         if cross > 0:
             coords = np.flip(coords,0)
 
-        # Generates counterclockwise edges from vertices
+        # Create RGBA array: default background is white
+        arr = np.zeros((sz2, sz1, 4), dtype=np.uint8)  # height, width, RGBA
+        arr[..., :3] = 255  # white background
+        arr[..., 3] = 0   # See through
+
+        # Compute triangle edges and outward normals
         side1 = coords[0,:] - coords[1,:]
         side2 = coords[1,:] - coords[2,:]
         side3 = coords[2,:] - coords[0,:]
@@ -189,27 +205,22 @@ class Tri(W_object):
 
         ## Now we wish to shade all pixels that are within the triangle, we do this by checking each pixel against the polytope criterion
         c_const = np.asmatrix([1/2,1/2]).T
-        for i in range(0,sz1):
-            for j in range(0,sz2):
-                x = (np.asmatrix([i,j]).T + c_const) / 3 + np.min(coords,0).T
-                cond1 = all(orth1*x <= orth1*coords[1,:].T)
-                cond2 = all(orth2*x <= orth2*coords[2,:].T)
-                cond3 = all(orth3*x <= orth3*coords[0,:].T)
+        for i in range(sz1):
+            for j in range(sz2):
+                x = (np.array([i,j]) + 0.5)/3 + np.min(coords,0).A1
+                cond1 = np.dot(orth1, x) <= np.dot(orth1, coords[1,:].A1)
+                cond2 = np.dot(orth2, x) <= np.dot(orth2, coords[2,:].A1)
+                cond3 = np.dot(orth3, x) <= np.dot(orth3, coords[0,:].A1)
 
                 if all([cond1,cond2,cond3]):
-                    arr[i,j] = 255
+                    arr[j,i,:3] = 0
+                    arr[j,i, 3] = 255   # alpha fully opaque
 
-        # Transpose the array to get it to y,x format for image
-        arr = arr.T
-
-        ## Now we use the array together with pysdl to create a sprite
-        arr = arr.reshape(sz1*sz2)
-        arr = np.pad(arr.T, ((0,0),(3,0)))
-        arr.shape = (sz1,sz2,4)
-        upscaled_img = Image.fromarray(arr.astype(np.uint8))
-                
+        ## Downscale image
+        upscaled_img = Image.fromarray(arr.astype(np.uint8))                
         im = upscaled_img.resize(size = (bounding_box[0,0], bounding_box[0,1]), resample= Image.BILINEAR)
 
+        # Create sprite
         sprite = fact.from_image(im)
         return sprite
 
@@ -263,7 +274,8 @@ class Collision:
     Static class for handling collision and overlap calculations
     between world objects like Ball, Barrier, and Tri.
     """
-    eps = 1e-1
+    eps = 5e-2
+    elasticity = 1
 
     @ staticmethod 
     def collide(obj1:'W_object', obj2:'W_object') -> bool:
@@ -327,7 +339,7 @@ class Collision:
         if proj_gap[0,0] <= 0:
             proj_vel = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(ball.vel)))
             proj_vel[0,0] = -proj_vel[0,0]
-            ball.vel = np.matmul(proj_vel, bar.mat)
+            ball.vel = np.matmul(proj_vel, bar.mat)*Collision.elasticity
 
             proj_coord = np.transpose(np.linalg.solve(np.transpose(bar.mat), np.transpose(ball.coord)))
             proj_coord = proj_coord - 2*proj_gap
@@ -357,17 +369,18 @@ class Collision:
 
             proj_vel = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(ball.vel)))
             proj_o_vel = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(other.vel)))
+
             u_a, u_b = proj_vel[0,0], proj_o_vel[0,0]
             combo_vel = u_a + u_b
             elapsed_time = overlap/combo_vel
 
-            coeff_sq = m_a**2 + m_a*m_b
-            coeff_li = -2*m_a**2*u_a - 2*m_a*m_b*u_b
-            coeff_co = m_a**2*u_a**2 + 2*m_a*m_b*u_a*u_b - m_a*m_b*u_a**2
+            # 1D restitution, gives same outcome as quad, but easier.
+            e = Collision.elasticity
+            v_aPrim = ((m_a - m_b)*u_a + 2*m_b*u_b) / (m_a + m_b) # Perfectly elastic, used for smart offsetting
+            v_bPrim = ((m_b - m_a)*u_b + 2*m_a*u_a) / (m_a + m_b)
 
-            roots = np.roots([coeff_sq, coeff_li, coeff_co])
-            v_a = min(roots)
-            v_b = (-m_a*v_a + m_a*u_a + m_b*u_b)/(m_b)
+            v_a = ((m_a - e*m_b)*u_a + (1+e)*m_b*u_b) / (m_a + m_b) # Elasticity adjusted, used for new
+            v_b = ((m_b - e*m_a)*u_b + (1+e)*m_a*u_a) / (m_a + m_b)
 
             proj_vel[0,0] = v_a
             proj_o_vel[0,0] = v_b
@@ -376,9 +389,9 @@ class Collision:
             ball.vel = np.matmul(proj_vel, base)
 
             proj_coord = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(ball.coord)))
-            proj_coord = proj_coord - np.asmatrix([u_a*elapsed_time, 0]) + np.asmatrix([v_a*elapsed_time, 0])
+            proj_coord = proj_coord - np.asmatrix([u_a*elapsed_time, 0]) + np.asmatrix([v_aPrim*elapsed_time, 0])
             proj_o_coord = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(other.coord)))
-            proj_o_coord = proj_o_coord - np.asmatrix([u_b*elapsed_time, 0]) + np.asmatrix([v_b*elapsed_time, 0])
+            proj_o_coord = proj_o_coord - np.asmatrix([u_b*elapsed_time, 0]) + np.asmatrix([v_bPrim*elapsed_time, 0])
 
             other.coord = np.matmul(proj_o_coord, base) + base_e_1*Collision.eps
             ball.coord = np.matmul(proj_coord, base) - base_e_1*Collision.eps
@@ -409,7 +422,7 @@ class Collision:
             if tri.vel is not None:
                 # Reflect velocity along the barrier normal
                 v_dot_n = float(tri.vel @ bar_normal.T)
-                tri.vel = tri.vel - 2 * v_dot_n * bar_normal
+                tri.vel = tri.vel - 2 * v_dot_n * bar_normal * Collision.elasticity
 
             # Move the triangle out along the barrier normal
             correction = -(max_penetration - eps)* bar_normal  # positive vector, we add a tiny offset since this collision is prone to getting stuck
@@ -466,8 +479,8 @@ class Collision:
             v_ball = (u_ball*(m1 - m2) + 2*m2*u_tri) / (m1 + m2)
             v_tri  = (u_tri*(m2 - m1) + 2*m1*u_ball) / (m1 + m2)
 
-            ball.vel += (v_ball - u_ball) * normal_hat
-            tri.vel  += (v_tri - u_tri) * normal_hat
+            ball.vel += (v_ball - u_ball) * normal_hat  * Collision.elasticity
+            tri.vel  += (v_tri - u_tri) * normal_hat * Collision.elasticity
 
             return True
 
@@ -522,9 +535,13 @@ class Collision:
         # Reflect velocities along MTV axis
         if tri1.vel is not None:
             v_dot = float(tri1.vel @ mtv_axis.T)
-            tri1.vel = tri1.vel - 2 * v_dot * mtv_axis
+            tri1.vel = tri1.vel - 2 * v_dot * mtv_axis * Collision.elasticity
         if tri2.vel is not None:
             v_dot = float(tri2.vel @ mtv_axis.T)
-            tri2.vel = tri2.vel - 2 * v_dot * mtv_axis
-
+            tri2.vel = tri2.vel - 2 * v_dot * mtv_axis * Collision.elasticity
+ 
         return True
+    
+    @staticmethod
+    def setElasticity(e):
+        Collision.elasticity = e
