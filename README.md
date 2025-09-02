@@ -1,5 +1,5 @@
 # physics-fun
-A little project to build and visualize a physics engine. This project is mostly from 2023, when I was taking some courses in basic numeric methods, and wanted to try to learn some skills that would be useful for gamedev.
+A little project to build and visualize a physics engine. This project is mostly from 2023, when I was taking some course in basic numeric methods, and wanted to try to learn some skills that would be useful for gamedev.
 
 ![Visual Example](demo.gif)
 
