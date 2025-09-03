@@ -33,9 +33,11 @@ class InitFuncs():
         bll = W.Ball(fact = factory, coord=[101,151], vel=[50,0], radius=50, mass = 100)        #Velocity in pixels per second
         bll2 = W.Ball(fact = factory , coord=[700,51], vel=[-250,0], radius=10, mass = 0.5)        #Velocity in pixels per second
         bll3 = W.Ball(fact = factory, coord=[300,50], vel=[-120,0], radius=30, mass= 4)        #Velocity in pixels per second
+        bll4 = W.Ball(fact = factory, coord=[350,25], vel=[-120,0], radius=25, mass= 3.8)        #Velocity in pixels per second
         objects.append(bll)
         objects.append(bll2)
         objects.append(bll3)
+        objects.append(bll4)
 
         bndt = W.Barrier(coord = [0,0], fact = factory, angle=np.pi)
         bndl = W.Barrier(coord=[0,0], fact = factory, angle=np.pi*1/2)
