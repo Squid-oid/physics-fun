@@ -371,7 +371,7 @@ class Collision:
             proj_o_vel = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(other.vel)))
 
             u_a, u_b = proj_vel[0,0], proj_o_vel[0,0]
-            combo_vel = u_a + u_b
+            combo_vel = u_b - u_a
             elapsed_time = overlap/combo_vel
 
             # 1D restitution, gives same outcome as quad, but easier.
@@ -393,8 +393,8 @@ class Collision:
             proj_o_coord = np.transpose(np.linalg.solve(np.transpose(base), np.transpose(other.coord)))
             proj_o_coord = proj_o_coord - np.asmatrix([u_b*elapsed_time, 0]) + np.asmatrix([v_bPrim*elapsed_time, 0])
 
-            other.coord = np.matmul(proj_o_coord, base) + base_e_1*Collision.eps
-            ball.coord = np.matmul(proj_coord, base) - base_e_1*Collision.eps
+            other.coord = np.matmul(proj_o_coord, base)
+            ball.coord = np.matmul(proj_coord, base)
             return True
 
         return False
@@ -436,55 +436,83 @@ class Collision:
     @staticmethod
     def tri_ball_collide(tri:'Tri', ball:'Ball') -> bool:
         """
-        Handles triangle-ball collision with velocity reflection for both.
+        Handles triangle-ball collision using SAT (Separating Axis Theorem). (Essentialy think of what we did to generate the triangle, but we check by interval not half plane / by matched half planes)
+        Resolves penetration and applies velocity reflection with elasticity.
         """
-        # Find closest triangle vertex to ball center
-        closest_point = None
-        min_dist = float('inf')
-        for pt in tri.coords:
-            delta = ball.coord - pt
-            dist = np.linalg.norm(delta)
-            if dist < min_dist:
-                min_dist = dist
-                closest_point = pt
+        P = np.asarray(ball.coord).flatten()
+        verts = [np.asarray(tri.coords[i, :]).flatten() for i in range(3)]
 
-        # Check for collision
-        if min_dist < ball.radius:
-            # Normal from triangle to ball
-            if min_dist == 0:
-                normal_hat = np.asmatrix([1.0, 0.0])
-            else:
-                normal_hat = (ball.coord - closest_point) / min_dist
+        # Candidate axes = triangle edge normals + axis from ball center to closest vertex
+        axes = []
+        for i in range(3):
+            edge = verts[(i+1) % 3] - verts[i]
+            normal = np.array([-edge[1], edge[0]])  # perpendicular
+            norm_len = np.linalg.norm(normal)
+            if norm_len > 1e-8:
+                axes.append(normal / norm_len)
 
-            # Penetration depth
-            penetration = ball.radius - min_dist
-            total_mass = ball.mass + tri.mass
+        # Extra axis: from circle center to closest vertex (needed for SAT with circle)
+        closest_vertex = min(verts, key=lambda v: np.linalg.norm(P - v))
+        extra_axis = P - closest_vertex
+        if np.linalg.norm(extra_axis) > 1e-8:
+            axes.append(extra_axis / np.linalg.norm(extra_axis))
 
-            # Move both objects out of collision proportionally to mass
-            ball.coord += normal_hat * ((penetration * (tri.mass / total_mass)) - Collision.eps)
-            tri.coords -= normal_hat * ((penetration * (ball.mass / total_mass)) + Collision.eps)
-            tri.coord = np.mean(tri.coords, axis=0)
+        overlap = float('inf')
+        smallest_axis = None
 
-            # Relative velocity along normal
-            v_rel = ball.vel - tri.vel
-            v_along_normal = float(v_rel @ normal_hat.T)
-            if v_along_normal > 0:
-                return True  # moving apart already
+        # SAT test
+        for axis in axes:
+            # Project triangle
+            tri_proj = [v @ axis for v in verts]
+            tri_min, tri_max = min(tri_proj), max(tri_proj)
 
-            # 1D elastic collision along normal
-            u_ball = float(ball.vel @ normal_hat.T)
-            u_tri = float(tri.vel @ normal_hat.T)
-            m1, m2 = ball.mass, tri.mass
+            # Project circle
+            c = P @ axis
+            circ_min, circ_max = c - ball.radius, c + ball.radius
 
-            v_ball = (u_ball*(m1 - m2) + 2*m2*u_tri) / (m1 + m2)
-            v_tri  = (u_tri*(m2 - m1) + 2*m1*u_ball) / (m1 + m2)
+            # Check overlap
+            if circ_max < tri_min or tri_max < circ_min:
+                return False  # separating axis found
 
-            ball.vel += (v_ball - u_ball) * normal_hat  * Collision.elasticity
-            tri.vel  += (v_tri - u_tri) * normal_hat * Collision.elasticity
+            o = min(tri_max, circ_max) - max(tri_min, circ_min)
+            if o < overlap:
+                overlap = o
+                smallest_axis = axis
 
-            return True
+        # If here, collision detected. smallest_axis is the MTV direction.
+        normal_hat = np.asmatrix(smallest_axis)
 
-        return False
+        # Ensure axis points from triangle -> ball
+        if (ball.coord - tri.coord) @ normal_hat.T < 0:
+            normal_hat = -normal_hat
+
+        # Add a small epsilon to penetration
+        penetration = overlap + Collision.eps
+        total_mass = ball.mass + tri.mass
+
+        # Push objects apart
+        ball.coord += normal_hat * (penetration * (tri.mass / total_mass))
+        tri.coords -= normal_hat * (penetration * (ball.mass / total_mass))
+        tri.coord = np.mean(tri.coords, axis=0)
+
+        # Relative velocity along normal
+        v_rel = ball.vel - tri.vel
+        v_along_normal = float(v_rel @ normal_hat.T)
+        if v_along_normal > 0:
+            return True  # already separating
+
+        # Elastic collision (1D along normal)
+        u_ball = float(ball.vel @ normal_hat.T)
+        u_tri  = float(tri.vel @ normal_hat.T)
+        m1, m2 = ball.mass, tri.mass
+
+        v_ball = (u_ball*(m1 - m2) + 2*m2*u_tri) / (m1 + m2)
+        v_tri  = (u_tri*(m2 - m1) + 2*m1*u_ball) / (m1 + m2)
+
+        ball.vel += (v_ball - u_ball) * normal_hat * Collision.elasticity
+        tri.vel  += (v_tri - u_tri) * normal_hat * Collision.elasticity
+
+        return True
 
     @staticmethod
     def tri_tri_collide(tri1:'Tri', tri2:'Tri') -> bool:
